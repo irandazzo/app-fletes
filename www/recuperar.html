@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FletArg - Recuperar Contraseña</title>
+    <!-- Vinculamos nuestra hoja de estilos -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        FletArg
+    </header>
+
+    <main>
+        <h2>Recuperar Contraseña</h2>
+        
+        <!-- Texto explicativo para el usuario -->
+        <p style="text-align: center; color: #555; margin-bottom: 25px; line-height: 1.5;">
+            Ingresá el correo electrónico con el que te registraste y te enviaremos las instrucciones para cambiar tu contraseña.
+        </p>
+        
+        <form>
+            <div class="form-group">
+                <label for="email-recupero">Email:</label>
+                <input type="email" id="email-recupero" name="email-recupero" placeholder="ejemplo@correo.com" required>
+            </div>
+
+            <button type="submit" class="btn-principal">Enviar instrucciones</button>
+        </form>
+
+        <div class="registro-section">
+            <!-- Enlace para volver si el usuario se arrepiente o recordó la clave -->
+            <a href="index.html" style="text-decoration: none;">
+                <button type="button" class="btn-secundario">Volver al Login</button>
+            </a>
+        </div>
+    </main>
+
+</body>
+</html>

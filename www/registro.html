@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FletArg - Crear Cuenta</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        FletArg - Registro
+    </header>
+
+    <main>
+        <h2 id="titulo-registro">Elegí tu tipo de cuenta</h2>
+        
+        <!-- PASO 1: Selección inicial de perfil con dos botones -->
+        <div id="seleccion-perfil" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+            <button type="button" class="btn-principal" onclick="mostrarFormulario('cliente')" style="background-color: #2b3a4a;">
+                Quiero pedir fletes (Cliente)
+            </button>
+            <button type="button" class="btn-principal" onclick="mostrarFormulario('proveedor')">
+                Tengo vehículo y quiero trabajar (Proveedor)
+            </button>
+        </div>
+
+        <!-- PASO 2: Formulario de registro (Oculto hasta que eligen el botón) -->
+        <form id="form-registro" style="display: none;">
+            <!-- Campo oculto para guardar qué rol eligió -->
+            <input type="hidden" id="rol-elegido" name="rol-elegido">
+
+            <div class="form-group">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" name="nombre" placeholder="Ej: Ignacio" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="apellido">Apellido:</label>
+                <input type="text" id="apellido" name="apellido" placeholder="Ej: Randazzo" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="ejemplo@correo.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="contrasena-reg">Contraseña:</label>
+                <input type="password" id="contrasena-reg" name="contrasena-reg" placeholder="********" required>
+            </div>
+
+            <!-- Campos exclusivos de Proveedor (Se muestran solo si eligió proveedor) -->
+            <div id="campos-proveedor" style="display: none;">
+                <div class="form-group">
+                    <label for="precio-km">Valor por kilómetro ($):</label>
+                    <input type="number" id="precio-km" name="precio-km" placeholder="Ej: 800" min="1">
+                </div>
+
+                <div class="form-group">
+                    <label for="acepta-negociar">¿Aceptas negociar el precio con el cliente?</label>
+                    <select id="acepta-negociar" name="acepta-negociar" class="select-estilo">
+                        <option value="si">Sí, acepto contraofertas</option>
+                        <option value="no">No, tarifa fija</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-principal" style="margin-bottom: 10px;">Completar Registro</button>
+            <button type="button" class="btn-secundario" onclick="volverSeleccion()">Cambiar tipo de cuenta</button>
+        </form>
+
+        <div class="registro-section">
+            <p>¿Ya tenés una cuenta?</p>
+            <a href="index.html" style="text-decoration: none;">
+                <button type="button" class="btn-secundario">Volver al Login</button>
+            </a>
+        </div>
+    </main>
+
+    <script src="main.js"></script>
+</body>
+</html>

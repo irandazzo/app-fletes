@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FletArg - Inicio Proveedor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="body-app">
+
+    <header>
+        FletArg - Chofer
+    </header>
+
+    <main class="main-fletero">
+        <!-- Barra de estado del chofer -->
+        <div class="estado-chofer activo">
+            <span class="punto-verde"></span>
+            <p>Estás en línea buscando viajes</p>
+        </div>
+
+        <!-- Lista de viajes disponibles -->
+        <div class="lista-viajes">
+            <h3 class="titulo-seccion">Viajes cercanos</h3>
+            
+            <!-- Contenedor dinámico obligatorio para que main.js pinte los viajes -->
+            <div id="lista-viajes-pendientes">
+                <!-- Acá se cargarán los viajes automáticamente -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Barra de Navegación Inferior -->
+    <nav class="bottom-nav">
+        <div class="nav-item activo">
+            <span class="icono">📋</span>
+            <span>Ofertas</span>
+        </div>
+        <a href="proveedor-perfil.html" style="text-decoration: none;" class="nav-item">
+            <span class="icono">💰</span>
+            <span>Ganancias</span>
+        </a>
+        <a href="perfil.html" style="text-decoration: none;" class="nav-item">
+            <span class="icono">👤</span>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+    <!-- Enlace vital al archivo de lógica -->
+    <script src="main.js"></script>
+</body>
+</html>

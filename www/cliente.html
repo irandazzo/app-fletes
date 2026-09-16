@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FletArg - Inicio Cliente</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="body-cliente">
+
+    <header>
+        FletArg
+    </header>
+
+    <main class="main-cliente">
+        <!-- Contenedor del Mapa (Placeholder) -->
+        <div class="mapa-placeholder">
+            <div>
+                <h2>🗺️</h2>
+                <p>Mapa Interactivo</p>
+                <small>(Acá integraremos el mapa real)</small>
+            </div>
+        </div>
+
+       <!-- Panel flotante para pedir el flete -->
+        <div class="panel-pedido">
+            <h3>¿Qué querés enviar hoy?</h3>
+            
+            <div class="form-group">
+                <input type="text" id="origen" placeholder="📍 Dirección de origen">
+            </div>
+            
+            <div class="form-group">
+                <input type="text" id="destino" placeholder="🏁 Dirección de destino">
+            </div>
+            
+            <!-- Selección de vehículo -->
+            <div class="seleccion-vehiculo">
+                <h4>Tipo de vehículo</h4>
+                <div class="opciones-vehiculo">
+                    <div class="opcion-card activa">
+                        <span class="icono-vehiculo">🛵</span>
+                        <span class="nombre-vehiculo">Moto</span>
+                    </div>
+                    <div class="opcion-card">
+                        <span class="icono-vehiculo">🚗</span>
+                        <span class="nombre-vehiculo">Auto</span>
+                    </div>
+                    <div class="opcion-card">
+                        <span class="icono-vehiculo">🛻</span>
+                        <span class="nombre-vehiculo">Pickup</span>
+                    </div>
+                    <div class="opcion-card">
+                        <span class="icono-vehiculo">🚐</span>
+                        <span class="nombre-vehiculo">Utilitario</span>
+                    </div>
+                    <div class="opcion-card">
+                        <span class="icono-vehiculo">🚚</span>
+                        <span class="nombre-vehiculo">Camión</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-principal">Cotizar Flete</button>
+        </div>
+    </main>
+
+    <!-- Barra de Navegación Inferior -->
+    <nav class="bottom-nav">
+        <a href="cliente.html" style="text-decoration: none;" class="nav-item">
+            <span class="icono">🏠</span>
+            <span>Inicio</span>
+        </a>
+        <a href="cliente-viajes.html" style="text-decoration: none;" class="nav-item activo">
+            <span class="icono">📦</span>
+            <span>Mis Viajes</span>
+        </a>
+        <div class="nav-item">
+            <a href="perfil.html" style="text-decoration: none;" class="nav-item">
+            <span class="icono">👤</span>
+            <span>Perfil</span></a>
+        </div>
+    </nav>
+
+    <script src="main.js"></script>
+</body>
+</html>

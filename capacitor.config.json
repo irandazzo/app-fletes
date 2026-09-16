@@ -1,0 +1,9 @@
+{
+  "appId": "com.randazzo.fletes",
+  "appName": "FletesApp",
+  "webDir": "www",
+  "server": {
+    "url": "http://10.0.2.2:5500",
+    "cleartext": true
+  }
+}

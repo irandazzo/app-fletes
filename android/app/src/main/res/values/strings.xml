@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FletesApp</string>
+    <string name="title_activity_main">FletesApp</string>
+    <string name="package_name">com.randazzo.fletes</string>
+    <string name="custom_url_scheme">com.randazzo.fletes</string>
+</resources>
