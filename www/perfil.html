@@ -13,7 +13,6 @@
     </header>
 
     <main class="main-fletero">
-        
         <!-- Tarjeta de información del usuario -->
         <div class="tarjeta-viaje" style="text-align: center; padding: 30px 20px;">
             <div style="font-size: 50px; margin-bottom: 15px;">👤</div>
@@ -21,21 +20,20 @@
             <p id="perfil-email" style="color: #666; margin-bottom: 15px; font-size: 14px;"></p>
             <span id="perfil-rol" class="distancia" style="padding: 6px 15px; font-size: 14px; display: inline-block; margin-bottom: 25px; background-color: #e6f0fa; color: #0066cc;">Rol</span>
             
-
             <!-- Botón de Modo Oscuro -->
             <button class="btn-principal" onclick="toggleDarkMode()" style="background-color: #333; color: #fff; width: 100%; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">
                 🌙 Activar / Desactivar Modo Oscuro
             </button>
+            <!-- Botón Cerrar Sesión -->
             <button class="btn-rechazar" onclick="cerrarSesion()" style="background-color: #f8d7da; color: #dc3545; width: 100%; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer;">
                 Cerrar Sesión
             </button>
         </div>
-
     </main>
 
-    <!-- Barra de Navegación Inferior Dinámica -->
+    <!-- Barra de Navegación Inferior Dinámica según el rol -->
     <nav class="bottom-nav" id="nav-perfil">
-        <!-- Se completará por JavaScript según el rol del usuario -->
+        <!-- Se completa mediante JavaScript -->
     </nav>
 
     <script src="main.js"></script>

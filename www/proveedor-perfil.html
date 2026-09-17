@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FletArg - Mis Viajes (Proveedor)</title>
+
+
+
+    <!-- Estilos -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="body-app">
@@ -41,6 +45,15 @@
         <!-- SECCIÓN 1: PENDIENTES -->
         <div id="seccion-pendientes" class="seccion-tab">
             <h3 class="titulo-seccion">Viajes ofertados (Esperando tu decisión)</h3>
+            <!-- Barra de Filtros por Vehículo -->
+<div class="filtros-proveedor" style="margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap;">
+    <button type="button" class="btn-filtro activo" onclick="filtrarViajes('todos', this)">Todos</button>
+    <button type="button" class="btn-filtro" onclick="filtrarViajes('Moto', this)">Moto</button>
+    <button type="button" class="btn-filtro" onclick="filtrarViajes('Auto', this)">Auto</button>
+    <button type="button" class="btn-filtro" onclick="filtrarViajes('Pickup', this)">Pickup</button>
+    <button type="button" class="btn-filtro" onclick="filtrarViajes('Utilitario', this)">Utilitario</button>
+    <button type="button" class="btn-filtro" onclick="filtrarViajes('Camión', this)">Camión</button>
+</div>
             <!-- Contenedor dinámico donde JS dibujará los viajes -->
             <div id="lista-viajes-pendientes">
                 <!-- Acá se cargarán los viajes creados por los clientes -->
@@ -89,7 +102,13 @@
 </a>
         </div>
     </nav>
+<!-- Base de Datos -->
+ <!-- SDKs de Firebase por CDN (Compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
+<!-- Logica Principal -->
     <script src="main.js"></script>
 </body>
 </html>

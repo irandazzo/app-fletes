@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FletArg - Inicio Cliente</title>
+
+    <!-- Flatpickr CSS: Estilos del calendario moderno -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_green.css">
+
+    <!-- Hoja de estilos general -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="body-cliente">
@@ -13,28 +19,21 @@
     </header>
 
     <main class="main-cliente">
-        <!-- Contenedor del Mapa (Placeholder) -->
-        <div class="mapa-placeholder">
-            <div>
-                <h2>🗺️</h2>
-                <p>Mapa Interactivo</p>
-                <small>(Acá integraremos el mapa real)</small>
-            </div>
-        </div>
-
-       <!-- Panel flotante para pedir el flete -->
+        <!-- Panel principal del formulario de pedido -->
         <div class="panel-pedido">
             <h3>¿Qué querés enviar hoy?</h3>
             
+            <!-- Input de Dirección de Origen -->
             <div class="form-group">
-                <input type="text" id="origen" placeholder="📍 Dirección de origen">
+                <input type="text" id="origen" placeholder="📍 Dirección de origen" autocomplete="off">
+            </div>
+
+            <!-- Input de Dirección de Destino -->
+            <div class="form-group">
+                <input type="text" id="destino" placeholder="🏁 Dirección de destino" autocomplete="off">
             </div>
             
-            <div class="form-group">
-                <input type="text" id="destino" placeholder="🏁 Dirección de destino">
-            </div>
-            
-            <!-- Selección de vehículo -->
+            <!-- Selección de vehículo (Grilla de a pares) -->
             <div class="seleccion-vehiculo">
                 <h4>Tipo de vehículo</h4>
                 <div class="opciones-vehiculo">
@@ -61,27 +60,116 @@
                 </div>
             </div>
 
-            <button class="btn-principal">Cotizar Flete</button>
+     <!-- SECCIÓN: Cuándo (Tarjetas de selección) -->
+<div class="seccion-extra">
+    <h4>¿Cuándo lo necesitás?</h4>
+    <div class="opciones-cuando" style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <button type="button" class="btn-opcion-cuando" id="btn-ahora" data-valor="ahora" style="flex: 1; padding: 12px; border: 2px solid #ddd; background: #f9f9f9; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+            ⚡ Lo antes posible
+        </button>
+        <button type="button" class="btn-opcion-cuando" id="btn-programado" data-valor="programado" style="flex: 1; padding: 12px; border: 2px solid #ddd; background: #f9f9f9; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+            📅 Programar fecha y hora
+        </button>
+    </div>
+    
+    <!-- Input oculto para guardar la opción elegida -->
+    <input type="hidden" id="tipo-viaje-seleccion" value="">
+    
+    <!-- Contenedor del calendario (Nace oculto) -->
+    <div id="contenedor-fecha" style="margin-top: 10px; display: none;">
+    <input type="datetime-local" id="fecha-programada" class="input-full">
+    <p id="texto-fecha-elegida" style="font-size: 13px; color: #28a745; margin-top: 6px; font-weight: 600; display: none;"></p>
+</div>
+</div>
+
+            <!-- SECCIÓN: Servicios adicionales -->
+            <div class="seccion-extra">
+                <h4>Servicios adicionales</h4>
+                
+                <!-- Opción Peón -->
+                <div class="grupo-check">
+                    <label class="check-item">
+                        <span class="check-texto">👷 Necesito peón/ayudante</span>
+                        <input type="checkbox" id="peon">
+                    </label>
+                    <div id="peon-cantidad-container" class="sub-opcion">
+                        <label for="cantidad-peones" style="margin:0; font-size:14px;">¿Cuántos peones?</label>
+                        <input type="number" id="cantidad-peones" min="1" value="1" class="input-chico">
+                    </div>
+                </div>
+
+                <!-- Opción Escalera -->
+                <div class="grupo-check">
+                    <label class="check-item">
+                        <span class="check-texto">🪜 Hay que usar escaleras</span>
+                        <input type="checkbox" id="escalera">
+                    </label>
+                    <div id="escalera-pisos-container" class="sub-opcion">
+                        <label for="cantidad-pisos" style="margin:0; font-size:14px;">¿Cuántos pisos?</label>
+                        <input type="number" id="cantidad-pisos" min="1" value="1" class="input-chico">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN: Detalle de la carga -->
+            <div class="seccion-extra">
+                <h4>¿Qué llevamos?</h4>
+                <textarea id="detalle-carga" class="input-full" placeholder="Ej: 1 heladera, 2 colchones, 5 cajas..." rows="2"></textarea>
+            </div>
+
+            <!-- SECCIÓN: Método de pago -->
+            <div class="seccion-extra">
+                <h4>Método de pago</h4>
+                <select id="metodo-pago" class="input-full">
+                    <option value="efectivo">💵 Efectivo al finalizar</option>
+                    <option value="transferencia">📱 Transferencia (MercadoPago/Banco)</option>
+                </select>
+            </div>
+
+            <!-- Botón principal de acción -->
+            <button class="btn-principal">Ver Resumen y Continuar</button>
         </div>
     </main>
 
     <!-- Barra de Navegación Inferior -->
     <nav class="bottom-nav">
-        <a href="cliente.html" style="text-decoration: none;" class="nav-item">
+        <a href="cliente.html" style="text-decoration: none;" class="nav-item activo">
             <span class="icono">🏠</span>
             <span>Inicio</span>
         </a>
-        <a href="cliente-viajes.html" style="text-decoration: none;" class="nav-item activo">
+        <a href="cliente-viajes.html" style="text-decoration: none;" class="nav-item">
             <span class="icono">📦</span>
             <span>Mis Viajes</span>
         </a>
-        <div class="nav-item">
-            <a href="perfil.html" style="text-decoration: none;" class="nav-item">
+        <a href="perfil.html" style="text-decoration: none;" class="nav-item">
             <span class="icono">👤</span>
-            <span>Perfil</span></a>
-        </div>
+            <span>Perfil</span>
+        </a>
     </nav>
 
+    <!-- MODAL DE RESUMEN Y CONFIRMACIÓN -->
+<div id="modal-confirmacion" class="modal-overlay oculto">
+    <div class="modal-content">
+        <h3>📋 Resumen de tu Flete</h3>
+        <div id="modal-detalles" style="margin: 15px 0; text-align: left; font-size: 14px; line-height: 1.6;">
+            <!-- Acá se inyecta el detalle completo por JS -->
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="button" class="btn-secundario" id="btn-cancelar-modal" style="flex:1;">Volver</button>
+            <button type="button" class="btn-principal" id="btn-confirmar-viaje" style="flex:1;">Confirmar y Publicar</button>
+        </div>
+    </div>
+</div>
+    <!-- Flatpickr JS y Localización en Español -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    
+    <!-- Base de Datos -->
+    <!-- SDKs de Firebase por CDN (Compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Lógica principal -->
     <script src="main.js"></script>
 </body>
 </html>

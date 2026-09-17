@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FletArg - Recuperar Contraseña</title>
-    <!-- Vinculamos nuestra hoja de estilos -->
+
+<!-- Base de Datos -->
+ <!-- SDKs de Firebase por CDN (Compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Estilos -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,27 +23,51 @@
     <main>
         <h2>Recuperar Contraseña</h2>
         
-        <!-- Texto explicativo para el usuario -->
-        <p style="text-align: center; color: #555; margin-bottom: 25px; line-height: 1.5;">
-            Ingresá el correo electrónico con el que te registraste y te enviaremos las instrucciones para cambiar tu contraseña.
-        </p>
-        
-        <form>
-            <div class="form-group">
-                <label for="email-recupero">Email:</label>
-                <input type="email" id="email-recupero" name="email-recupero" placeholder="ejemplo@correo.com" required>
-            </div>
+        <!-- PASO 1: Ingresar el correo -->
+        <div id="paso-correo">
+            <p style="text-align: center; color: #555; margin-bottom: 25px; line-height: 1.5;">
+                Ingresá el correo electrónico con el que te registraste y te enviaremos un código de recuperación.
+            </p>
+            
+            <form id="form-recupero-correo" onsubmit="enviarCodigoRecuperoPagina(event)">
+                <div class="form-group">
+                    <label for="email-recupero">Email:</label>
+                    <input type="email" id="email-recupero" name="email-recupero" placeholder="ejemplo@correo.com" required>
+                </div>
 
-            <button type="submit" class="btn-principal">Enviar instrucciones</button>
-        </form>
+                <button type="submit" class="btn-principal">Enviar código</button>
+            </form>
+        </div>
 
-        <div class="registro-section">
-            <!-- Enlace para volver si el usuario se arrepiente o recordó la clave -->
+        <!-- PASO 2: Ingresar código y nueva contraseña (Nace oculto) -->
+        <div id="paso-nueva-pass" style="display: none; margin-top: 15px;">
+            <p style="text-align: center; color: #28a745; font-weight: 600; margin-bottom: 20px;">
+                ✔️ Código enviado. Revisá tu bandeja (simulado).
+            </p>
+
+            <form id="form-nueva-pass" onsubmit="cambiarContrasenaPagina(event)">
+                <div class="form-group">
+                    <label for="codigo-ingresado">Código de 6 dígitos:</label>
+                    <input type="text" id="codigo-ingresado" placeholder="Ej: 485912" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="nueva-contrasena">Nueva contraseña:</label>
+                    <input type="password" id="nueva-contrasena" placeholder="Mínimo 4 caracteres" required>
+                </div>
+
+                <button type="submit" class="btn-principal">Actualizar contraseña</button>
+            </form>
+        </div>
+
+        <div class="registro-section" style="margin-top: 20px;">
             <a href="index.html" style="text-decoration: none;">
                 <button type="button" class="btn-secundario">Volver al Login</button>
             </a>
         </div>
     </main>
 
+    <!-- Vinculamos nuestro script -->
+    <script src="main.js"></script>
 </body>
 </html>

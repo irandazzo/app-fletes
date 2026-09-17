@@ -13,7 +13,6 @@
     </header>
 
     <main class="main-fletero">
-        
         <!-- Pestañas (Tabs) de navegación interna para el Cliente -->
         <div class="pestanas-container">
             <button id="btn-cliente-pendientes" class="pestana-btn activa" onclick="cambiarPestanaCliente('pendientes')">Buscando (0)</button>
@@ -21,47 +20,39 @@
             <button id="btn-cliente-historial" class="pestana-btn" onclick="cambiarPestanaCliente('historial')">Historial (0)</button>
         </div>
 
-        <!-- SECCIÓN 1: BUSCANDO / PENDIENTES DE ACEPTACIÓN -->
+        <!-- SECCIÓN 1: BUSCANDO / PENDIENTES -->
         <div id="seccion-cliente-pendientes" class="seccion-tab">
             <h3 class="titulo-seccion">Fletes publicados (Esperando proveedor)</h3>
-            <div id="lista-cliente-pendientes">
-                <!-- Acá se cargan los fletes creados por el cliente -->
-            </div>
+            <div id="lista-cliente-pendientes"></div>
         </div>
 
         <!-- SECCIÓN 2: EN CURSO / ACEPTADOS -->
         <div id="seccion-cliente-en-curso" class="seccion-tab" style="display: none;">
             <h3 class="titulo-seccion">Viajes aceptados por un proveedor</h3>
-            <div id="lista-cliente-en-curso">
-                <!-- Acá se cargan los fletes en camino -->
-            </div>
+            <div id="lista-cliente-en-curso"></div>
         </div>
 
         <!-- SECCIÓN 3: HISTORIAL / COMPLETADOS -->
         <div id="seccion-cliente-historial" class="seccion-tab" style="display: none;">
             <h3 class="titulo-seccion">Tus fletes finalizados</h3>
-            <div id="lista-cliente-historial">
-                <!-- Historial con calificaciones -->
-            </div>
+            <div id="lista-cliente-historial"></div>
         </div>
-
     </main>
 
-    <!-- Barra de Navegación Inferior del Cliente -->
+    <!-- Barra de Navegación Inferior -->
     <nav class="bottom-nav">
         <a href="cliente.html" style="text-decoration: none;" class="nav-item">
             <span class="icono">🏠</span>
             <span>Inicio</span>
         </a>
-        <div class="nav-item activo">
+        <a href="cliente-viajes.html" style="text-decoration: none;" class="nav-item activo">
             <span class="icono">📦</span>
             <span>Mis Viajes</span>
-        </div>
-        <div class="nav-item">
-            <a href="perfil.html" style="text-decoration: none;" class="nav-item">
+        </a>
+        <a href="perfil.html" style="text-decoration: none;" class="nav-item">
             <span class="icono">👤</span>
             <span>Perfil</span>
-        </div>
+        </a>
     </nav>
 
     <script src="main.js"></script>
