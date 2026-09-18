@@ -3,57 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FletArg - Mis Fletes (Cliente)</title>
+    <title>FletArg - Mis Viajes</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="body-app">
 
     <header>
-        FletArg - Mis Fletes
+        FletArg - Mis Viajes
     </header>
 
     <main class="main-fletero">
-        <!-- Pestañas (Tabs) de navegación interna para el Cliente -->
+        <!-- Solapas para alternar entre estados -->
         <div class="pestanas-container">
-            <button id="btn-cliente-pendientes" class="pestana-btn activa" onclick="cambiarPestanaCliente('pendientes')">Buscando (0)</button>
-            <button id="btn-cliente-en-curso" class="pestana-btn" onclick="cambiarPestanaCliente('en-curso')">En Camino (0)</button>
-            <button id="btn-cliente-historial" class="pestana-btn" onclick="cambiarPestanaCliente('historial')">Historial (0)</button>
+            <button class="pestana-btn activa" id="btn-cliente-pendientes" onclick="cambiarPestanaCliente('pendientes')">Buscando (0)</button>
+            <button class="pestana-btn" id="btn-cliente-en-curso" onclick="cambiarPestanaCliente('en-curso')">En Camino (0)</button>
+            <button class="pestana-btn" id="btn-cliente-historial" onclick="cambiarPestanaCliente('historial')">Historial (0)</button>
         </div>
 
-        <!-- SECCIÓN 1: BUSCANDO / PENDIENTES -->
-        <div id="seccion-cliente-pendientes" class="seccion-tab">
-            <h3 class="titulo-seccion">Fletes publicados (Esperando proveedor)</h3>
-            <div id="lista-cliente-pendientes"></div>
+        <!-- Sección Fletes en Búsqueda / Pendientes -->
+        <div id="seccion-cliente-pendientes" style="display: block;">
+            <div id="lista-cliente-pendientes">
+                <!-- Se llena dinámicamente por JavaScript -->
+            </div>
         </div>
 
-        <!-- SECCIÓN 2: EN CURSO / ACEPTADOS -->
-        <div id="seccion-cliente-en-curso" class="seccion-tab" style="display: none;">
-            <h3 class="titulo-seccion">Viajes aceptados por un proveedor</h3>
-            <div id="lista-cliente-en-curso"></div>
+        <!-- Sección Fletes Aceptados / En Curso -->
+        <div id="seccion-cliente-en-curso" style="display: none;">
+            <div id="lista-cliente-en-curso">
+                <!-- Se llena dinámicamente por JavaScript -->
+            </div>
         </div>
 
-        <!-- SECCIÓN 3: HISTORIAL / COMPLETADOS -->
-        <div id="seccion-cliente-historial" class="seccion-tab" style="display: none;">
-            <h3 class="titulo-seccion">Tus fletes finalizados</h3>
-            <div id="lista-cliente-historial"></div>
+        <!-- Sección Historial / Completados -->
+        <div id="seccion-cliente-historial" style="display: none;">
+            <div id="lista-cliente-historial">
+                <!-- Se llena dinámicamente por JavaScript -->
+            </div>
         </div>
     </main>
 
-    <!-- Barra de Navegación Inferior -->
+    <!-- Navegación Inferior Fija -->
     <nav class="bottom-nav">
-        <a href="cliente.html" style="text-decoration: none;" class="nav-item">
-            <span class="icono">🏠</span>
-            <span>Inicio</span>
-        </a>
-        <a href="cliente-viajes.html" style="text-decoration: none;" class="nav-item activo">
-            <span class="icono">📦</span>
-            <span>Mis Viajes</span>
-        </a>
-        <a href="perfil.html" style="text-decoration: none;" class="nav-item">
-            <span class="icono">👤</span>
-            <span>Perfil</span>
-        </a>
+        <a href="cliente.html" class="nav-item"><span class="icono">🏠</span><span>Inicio</span></a>
+        <a href="cliente-viajes.html" class="nav-item activo"><span class="icono">📦</span><span>Mis Viajes</span></a>
+        <a href="perfil.html" class="nav-item"><span class="icono">👤</span><span>Perfil</span></a>
     </nav>
+
+    <!-- SDKs de Firebase por CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <script src="main.js"></script>
 </body>

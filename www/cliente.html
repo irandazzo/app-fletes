@@ -3,173 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FletArg - Inicio Cliente</title>
-
-    <!-- Flatpickr CSS: Estilos del calendario moderno -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_green.css">
-
-    <!-- Hoja de estilos general -->
+    <title>FletArg - Solicitar Flete</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="body-cliente">
 
     <header>
-        FletArg
+        FletArg - Pedir Flete
     </header>
 
     <main class="main-cliente">
-        <!-- Panel principal del formulario de pedido -->
         <div class="panel-pedido">
-            <h3>¿Qué querés enviar hoy?</h3>
-            
-            <!-- Input de Dirección de Origen -->
-            <div class="form-group">
-                <input type="text" id="origen" placeholder="📍 Dirección de origen" autocomplete="off">
-            </div>
+            <h3>¿Qué necesitás trasladar hoy?</h3>
 
-            <!-- Input de Dirección de Destino -->
-            <div class="form-group">
-                <input type="text" id="destino" placeholder="🏁 Dirección de destino" autocomplete="off">
-            </div>
-            
-            <!-- Selección de vehículo (Grilla de a pares) -->
+            <!-- 1. Selección de Vehículo -->
             <div class="seleccion-vehiculo">
-                <h4>Tipo de vehículo</h4>
+                <h4>1. Elegí el vehículo:</h4>
                 <div class="opciones-vehiculo">
-                    <div class="opcion-card activa">
-                        <span class="icono-vehiculo">🛵</span>
+                    <div class="opcion-card activa" data-vehiculo="Moto">
+                        <span class="icono-vehiculo">🏍️</span>
                         <span class="nombre-vehiculo">Moto</span>
                     </div>
-                    <div class="opcion-card">
-                        <span class="icono-vehiculo">🚗</span>
-                        <span class="nombre-vehiculo">Auto</span>
-                    </div>
-                    <div class="opcion-card">
-                        <span class="icono-vehiculo">🛻</span>
-                        <span class="nombre-vehiculo">Pickup</span>
-                    </div>
-                    <div class="opcion-card">
+                    <div class="opcion-card" data-vehiculo="Utilitario">
                         <span class="icono-vehiculo">🚐</span>
                         <span class="nombre-vehiculo">Utilitario</span>
                     </div>
-                    <div class="opcion-card">
+                    <div class="opcion-card" data-vehiculo="Pickup">
+                        <span class="icono-vehiculo">🛻</span>
+                        <span class="nombre-vehiculo">Pickup</span>
+                    </div>
+                    <div class="opcion-card" data-vehiculo="Camión">
                         <span class="icono-vehiculo">🚚</span>
                         <span class="nombre-vehiculo">Camión</span>
                     </div>
                 </div>
             </div>
 
-     <!-- SECCIÓN: Cuándo (Tarjetas de selección) -->
-<div class="seccion-extra">
-    <h4>¿Cuándo lo necesitás?</h4>
-    <div class="opciones-cuando" style="display: flex; gap: 10px; margin-bottom: 10px;">
-        <button type="button" class="btn-opcion-cuando" id="btn-ahora" data-valor="ahora" style="flex: 1; padding: 12px; border: 2px solid #ddd; background: #f9f9f9; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
-            ⚡ Lo antes posible
-        </button>
-        <button type="button" class="btn-opcion-cuando" id="btn-programado" data-valor="programado" style="flex: 1; padding: 12px; border: 2px solid #ddd; background: #f9f9f9; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
-            📅 Programar fecha y hora
-        </button>
-    </div>
-    
-    <!-- Input oculto para guardar la opción elegida -->
-    <input type="hidden" id="tipo-viaje-seleccion" value="">
-    
-    <!-- Contenedor del calendario (Nace oculto) -->
-    <div id="contenedor-fecha" style="margin-top: 10px; display: none;">
-    <input type="datetime-local" id="fecha-programada" class="input-full">
-    <p id="texto-fecha-elegida" style="font-size: 13px; color: #28a745; margin-top: 6px; font-weight: 600; display: none;"></p>
-</div>
-</div>
-
-            <!-- SECCIÓN: Servicios adicionales -->
+            <!-- 2. Direcciones -->
             <div class="seccion-extra">
-                <h4>Servicios adicionales</h4>
+                <h4>2. Recorrido:</h4>
+                <div class="form-group">
+                    <label for="origen">Dirección de Origen:</label>
+                    <input type="text" id="origen" placeholder="Ej: Av. Corrientes 1234, CABA" autocomplete="off">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="destino">Dirección de Destino:</label>
+                    <input type="text" id="destino" placeholder="Ej: Av. Rivadavia 5678, CABA" autocomplete="off">
+                </div>
+            </div>
+
+            <!-- 3. Cuándo lo necesita -->
+            <div class="seccion-extra">
+                <h4>3. ¿Cuándo lo necesitás?</h4>
+                <input type="hidden" id="tipo-viaje-seleccion" value="inmediato">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button type="button" class="btn-principal btn-opcion-cuando activo" data-valor="inmediato" style="background: transparent; color: #2b3a4a; border: 1px solid #ccc; font-size: 14px; padding: 10px;">⚡ Lo antes posible</button>
+                    <button type="button" class="btn-principal btn-opcion-cuando" data-valor="programado" style="background: transparent; color: #2b3a4a; border: 1px solid #ccc; font-size: 14px; padding: 10px;">📅 Programar fecha</button>
+                </div>
                 
-                <!-- Opción Peón -->
+                <div id="contenedor-fecha" style="display: none; margin-top: 10px;">
+                    <label for="fecha-programada" style="font-size: 13px; color: #555; margin-bottom: 5px;">Fecha y hora del servicio:</label>
+                    <input type="datetime-local" id="fecha-programada">
+                    <small id="texto-fecha-elegida" style="display:none; color: #2e7d32; font-weight: bold; margin-top: 5px;"></small>
+                </div>
+            </div>
+
+            <!-- 4. Servicios Adicionales -->
+            <div class="seccion-extra">
+                <h4>4. Servicios adicionales (Opcional):</h4>
+                
+                <!-- Peón -->
                 <div class="grupo-check">
                     <label class="check-item">
                         <span class="check-texto">👷 Necesito peón/ayudante</span>
                         <input type="checkbox" id="peon">
                     </label>
                     <div id="peon-cantidad-container" class="sub-opcion">
-                        <label for="cantidad-peones" style="margin:0; font-size:14px;">¿Cuántos peones?</label>
-                        <input type="number" id="cantidad-peones" min="1" value="1" class="input-chico">
+                        <span style="font-size: 14px; color: #555;">Cantidad de ayudantes:</span>
+                        <input type="number" id="cantidad-peones" class="input-chico" value="1" min="1" max="5">
                     </div>
                 </div>
 
-                <!-- Opción Escalera -->
+                <!-- Escalera -->
                 <div class="grupo-check">
                     <label class="check-item">
-                        <span class="check-texto">🪜 Hay que usar escaleras</span>
+                        <span class="check-texto">🪜 Subir por escalera (Pisos)</span>
                         <input type="checkbox" id="escalera">
                     </label>
                     <div id="escalera-pisos-container" class="sub-opcion">
-                        <label for="cantidad-pisos" style="margin:0; font-size:14px;">¿Cuántos pisos?</label>
-                        <input type="number" id="cantidad-pisos" min="1" value="1" class="input-chico">
+                        <span style="font-size: 14px; color: #555;">Cantidad de pisos:</span>
+                        <input type="number" id="cantidad-pisos" class="input-chico" value="1" min="1" max="20">
                     </div>
                 </div>
             </div>
 
-            <!-- SECCIÓN: Detalle de la carga -->
+            <!-- 5. Detalles y Pago -->
             <div class="seccion-extra">
-                <h4>¿Qué llevamos?</h4>
-                <textarea id="detalle-carga" class="input-full" placeholder="Ej: 1 heladera, 2 colchones, 5 cajas..." rows="2"></textarea>
+                <div class="form-group">
+                    <label for="detalle-carga">Detalles de la carga:</label>
+                    <textarea id="detalle-carga" class="input-full" rows="2" placeholder="Ej: Una heladera, dos cajas..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="metodo-pago">Método de pago:</label>
+                    <select id="metodo-pago" class="select-estilo">
+                        <option value="efectivo">Efectivo al finalizar</option>
+                        <option value="transferencia">Transferencia Bancaria</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- SECCIÓN: Método de pago -->
-            <div class="seccion-extra">
-                <h4>Método de pago</h4>
-                <select id="metodo-pago" class="input-full">
-                    <option value="efectivo">💵 Efectivo al finalizar</option>
-                    <option value="transferencia">📱 Transferencia (MercadoPago/Banco)</option>
-                </select>
-            </div>
-
-            <!-- Botón principal de acción -->
-            <button class="btn-principal">Ver Resumen y Continuar</button>
+            <!-- Botón Cotizar -->
+            <button type="button" class="btn-principal" style="background-color: #4CAF50; margin-top: 10px;">Cotizar y Publicar Flete</button>
         </div>
     </main>
 
-    <!-- Barra de Navegación Inferior -->
-    <nav class="bottom-nav">
-        <a href="cliente.html" style="text-decoration: none;" class="nav-item activo">
-            <span class="icono">🏠</span>
-            <span>Inicio</span>
-        </a>
-        <a href="cliente-viajes.html" style="text-decoration: none;" class="nav-item">
-            <span class="icono">📦</span>
-            <span>Mis Viajes</span>
-        </a>
-        <a href="perfil.html" style="text-decoration: none;" class="nav-item">
-            <span class="icono">👤</span>
-            <span>Perfil</span>
-        </a>
-    </nav>
-
-    <!-- MODAL DE RESUMEN Y CONFIRMACIÓN -->
-<div id="modal-confirmacion" class="modal-overlay oculto">
-    <div class="modal-content">
-        <h3>📋 Resumen de tu Flete</h3>
-        <div id="modal-detalles" style="margin: 15px 0; text-align: left; font-size: 14px; line-height: 1.6;">
-            <!-- Acá se inyecta el detalle completo por JS -->
-        </div>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button type="button" class="btn-secundario" id="btn-cancelar-modal" style="flex:1;">Volver</button>
-            <button type="button" class="btn-principal" id="btn-confirmar-viaje" style="flex:1;">Confirmar y Publicar</button>
+    <!-- Modal de Confirmación de Flete -->
+    <div id="modal-confirmacion" class="modal-overlay oculto">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px; color: #2b3a4a;">📦 Resumen del Pedido</h3>
+            <div id="modal-detalles" style="text-align: left; font-size: 14px; color: #444; margin-bottom: 20px; line-height: 1.6;">
+                <!-- Se llena por JS -->
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" id="btn-cancelar-modal" class="btn-secundario" style="padding: 12px; font-size: 14px;">Cancelar</button>
+                <button type="button" id="btn-confirmar-viaje" class="btn-principal" style="padding: 12px; font-size: 14px; background-color: #4CAF50;">Confirmar Flete</button>
+            </div>
         </div>
     </div>
-</div>
-    <!-- Flatpickr JS y Localización en Español -->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
-    
-    <!-- Base de Datos -->
-    <!-- SDKs de Firebase por CDN (Compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <!-- Lógica principal -->
+
+    <!-- Navegación Inferior -->
+    <nav class="bottom-nav">
+        <a href="cliente.html" class="nav-item activo"><span class="icono">🏠</span><span>Inicio</span></a>
+        <a href="cliente-viajes.html" class="nav-item"><span class="icono">📦</span><span>Mis Viajes</span></a>
+        <a href="perfil.html" class="nav-item"><span class="icono">👤</span><span>Perfil</span></a>
+    </nav>
+
+    <!-- SDKs de Firebase por CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <script src="main.js"></script>
 </body>
 </html>

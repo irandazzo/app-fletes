@@ -10,7 +10,6 @@ const firebaseConfig = {
     appId: "1:621620714229:web:b2cef10225322f5d07c3bc"
 };
 
-// Inicializar Firebase y los servicios que vamos a usar
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
@@ -19,29 +18,41 @@ const auth = firebase.auth();
 document.addEventListener('DOMContentLoaded', () => {
 
     // ==========================================
-    // 0. PROTECCIÓN DE RUTAS SEGÚN EL ROL
+    // 0. PROTECCIÓN DE RUTAS (NUBE)
     // ==========================================
     const path = window.location.pathname;
-    const emailActivo = localStorage.getItem('fletarg_usuario_activo');
 
-    if ((path.includes('cliente') || path.includes('proveedor') || path.includes('perfil')) && !emailActivo) {
-        window.location.href = 'index.html';
-        return;
-    }
+    auth.onAuthStateChanged(async (user) => {
+        const protectedPaths = ['cliente', 'proveedor', 'perfil'];
+        const isProtected = protectedPaths.some(p => path.includes(p));
 
-    if (emailActivo) {
-        const usuarioActivo = JSON.parse(localStorage.getItem(emailActivo));
-        if (usuarioActivo) {
-            if (usuarioActivo.rol === 'cliente' && path.includes('proveedor')) {
-                window.location.href = 'cliente.html';
-                return;
-            }
-            if (usuarioActivo.rol === 'proveedor' && (path.includes('cliente.html') || path.includes('cliente-viajes.html'))) {
-                window.location.href = 'proveedor-perfil.html';
-                return;
+        if (isProtected && !user) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        if (user) {
+            try {
+                let docSnap = await db.collection("usuarios").doc(user.uid).get();
+                if (!docSnap.exists) {
+                    docSnap = await db.collection("usuarios").doc(user.email).get();
+                }
+
+                if (docSnap.exists) {
+                    const usuarioData = docSnap.data();
+                    const rol = (usuarioData.rol || '').toLowerCase();
+
+                    if (rol === 'cliente' && path.includes('proveedor')) {
+                        window.location.href = 'cliente.html';
+                    } else if (rol === 'proveedor' && path.includes('cliente')) {
+                        window.location.href = 'proveedor-perfil.html';
+                    }
+                }
+            } catch (e) {
+                console.error("Error verificando rol en nube:", e);
             }
         }
-    }
+    });
     
     // ==========================================
     // 1. SELECCIÓN DE VEHÍCULOS (Cliente)
@@ -57,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-   // 2. SELECCIÓN DE TIEMPO (Botones interactivos)
+    // 2. SELECCIÓN DE TIEMPO
     // ==========================================
     const botonesCuando = document.querySelectorAll('.btn-opcion-cuando');
     const inputTipoViajeSel = document.getElementById('tipo-viaje-seleccion');
@@ -65,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputFechaProgramada = document.getElementById("fecha-programada");
     const textoFechaElegida = document.getElementById("texto-fecha-elegida");
 
-    botonesКогда = botonesCuando; // por compatibilidad
     botonesCuando.forEach(boton => {
         boton.addEventListener('click', (e) => {
             botonesCuando.forEach(b => b.classList.remove('activo'));
@@ -77,7 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (valorElegido === 'programado') {
                 if (contenedorFecha) contenedorFecha.style.display = "block";
                 
-                // Bloquear visualmente en el calendario del navegador cualquier fecha/hora pasada
                 if (inputFechaProgramada) {
                     const ahora = new Date();
                     const anio = ahora.getFullYear();
@@ -114,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
     // ==========================================
     // 3. SERVICIOS ADICIONALES (Peón y Escalera)
     // ==========================================
@@ -146,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 4. AUTOCOMPLETADO DE DIRECCIONES (Photon API)
+    // 4. AUTOCOMPLETADO DE DIRECCIONES
     // ==========================================
     function configurarAutocompletado(inputId) {
         const input = document.getElementById(inputId);
@@ -214,8 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
     configurarAutocompletado('destino');
 
     // ==========================================
-    // ==========================================
-    // 5. REGISTRO DE USUARIOS (Con Firebase Cloud)
+    // 5. REGISTRO DE USUARIOS
     // ==========================================
     const formRegistro = document.getElementById('form-registro');
     if (formRegistro) {
@@ -228,13 +237,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const rol = document.getElementById('rol-elegido').value;
 
             try {
-                // 1. Crear el usuario en Firebase Authentication
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const uid = userCredential.user.uid;
+                const credencial = await auth.createUserWithEmailAndPassword(email, password);
+                const user = credencial.user;
 
-                // 2. Preparar los datos adicionales del usuario
                 let datosUsuario = {
-                    uid: uid,
+                    uid: user.uid,
                     nombre: nombre,
                     apellido: apellido,
                     email: email,
@@ -242,85 +249,90 @@ document.addEventListener('DOMContentLoaded', () => {
                     fechaCreacion: new Date().toISOString()
                 };
 
-                // Si es proveedor, guardamos sus tarifas personalizadas
                 if (rol === 'proveedor') {
                     datosUsuario.tarifas = {
-                        precioKm: parseFloat(document.getElementById('precio-km').value) || 0,
                         precioPiso: parseFloat(document.getElementById('precio-piso').value) || 0,
                         ofrecePeon: document.getElementById('ofrece-peon').value,
                         precioPeon: parseFloat(document.getElementById('precio-peon').value) || 0,
                         negociar: document.getElementById('acepta-negociar').value
                     };
+                    datosUsuario.vehiculos = []; 
                 }
 
-                // 3. Guardar el documento completo en la colección "usuarios" de Firestore
-                await db.collection("usuarios").doc(email).set(datosUsuario);
-
-                // 4. Guardar sesión activa localmente para la interfaz y redirigir
-                localStorage.setItem('fletarg_usuario_activo', email);
-
-                alert('¡Cuenta creada con éxito en la nube! Redirigiendo a tu panel...');
-
-                if (rol === 'cliente') {
-                    window.location.href = 'cliente.html';
-                } else if (rol === 'proveedor') {
-                    window.location.href = 'proveedor-perfil.html';
-                }
+                await db.collection("usuarios").doc(user.uid).set(datosUsuario);
+                
+                mostrarModalMensaje('¡Cuenta creada!', 'Tu cuenta ha sido creada con éxito en la nube.', 'exito', () => {
+                    if (rol === 'cliente') {
+                        window.location.href = 'cliente.html';
+                    } else if (rol === 'proveedor') {
+                        window.location.href = 'proveedor-perfil.html';
+                    }
+                });
 
             } catch (error) {
-                console.error("Error en el registro:", error);
+                console.error("Error detallado en el registro:", error);
                 if (error.code === 'auth/email-already-in-use') {
-                    alert('⚠️ Error: Ya existe una cuenta registrada con este correo electrónico.');
+                    mostrarModalMensaje('Correo en uso', 'Este correo electrónico ya está registrado.', 'advertencia');
                 } else if (error.code === 'auth/weak-password') {
-                    alert('⚠️ Error: La contraseña debe tener al menos 6 caracteres.');
+                    mostrarModalMensaje('Contraseña débil', 'La contraseña debe tener al menos 6 caracteres.', 'advertencia');
                 } else {
-                    alert('⚠️ Error al registrar: ' + error.message);
+                    mostrarModalMensaje('Error de Registro', 'Ocurrió un error: ' + error.message, 'error');
                 }
             }
         });
     }
-    // ==========================================
+
     // ==========================================
     // 6. INICIO DE SESIÓN (LOGIN)
     // ==========================================
     const formLogin = document.getElementById('form-login');
     if (formLogin) {
-        formLogin.addEventListener('submit', (evento) => {
+        formLogin.addEventListener('submit', async (evento) => {
             evento.preventDefault();
             const emailIngresado = document.getElementById('usuario').value.trim();
             const passwordIngresada = document.getElementById('contrasena').value.trim();
 
-            const datosUsuarioGuardado = localStorage.getItem(emailIngresado);
-            if (!datosUsuarioGuardado) {
-                alert('⚠️ Error: No existe una cuenta registrada con este correo.');
-                return;
-            }
+            try {
+                const credencial = await auth.signInWithEmailAndPassword(emailIngresado, passwordIngresada);
+                const user = credencial.user;
 
-            const usuario = JSON.parse(datosUsuarioGuardado);
-            if (usuario.password !== passwordIngresada) {
-                alert('⚠️ Error: Contraseña incorrecta.');
-                return;
-            }
+                if (!user) {
+                    mostrarModalMensaje('Error', 'No se pudo autenticar el usuario.', 'error');
+                    return;
+                }
 
-            // Guardar sesión activa
-            localStorage.setItem('fletarg_usuario_activo', emailIngresado);
+                let docSnap = await db.collection("usuarios").doc(user.uid).get();
+                if (!docSnap.exists) {
+                    docSnap = await db.collection("usuarios").doc(user.email).get();
+                }
 
-            // AUDITORÍA: Registrar el inicio de sesión exitoso de forma segura
-            if (typeof registrarAccionEnBitacora === 'function') {
-                registrarAccionEnBitacora('LOGIN', `Inicio de sesión exitoso (${usuario.rol})`, emailIngresado);
-            }
+                if (!docSnap.exists) {
+                    mostrarModalMensaje('Perfil no encontrado', 'Tu cuenta existe pero no se hallaron tus datos en Firestore.', 'error');
+                    return;
+                }
 
-            // Redireccionar según el rol
-            if (usuario.rol === 'cliente') {
-                window.location.href = 'cliente.html';
-            } else if (usuario.rol === 'proveedor') {
-                window.location.href = 'proveedor-perfil.html';
+                const usuario = docSnap.data();
+                const rol = (usuario.rol || '').toLowerCase().trim();
+
+                registrarAccionEnBitacora('LOGIN', `Inicio de sesión exitoso (${rol})`, user.email);
+
+                if (rol === 'cliente') {
+                    window.location.href = 'cliente.html';
+                } else if (rol === 'proveedor') {
+                    window.location.href = 'proveedor-perfil.html';
+                } else {
+                    mostrarModalMensaje('Error de Rol', `El rol '${rol}' no es válido.`, 'error');
+                }
+
+            } catch (error) {
+                console.error("Error detallado en login:", error);
+                mostrarModalMensaje('Error de Acceso', 'Correo o contraseña incorrectos.', 'error');
             }
         });
     }
+
     // ==========================================
-// ==========================================
-    // 7. FLUJO DE RESUMEN Y MODAL DE CONFIRMACIÓN (Cliente)
+    // 7. COTIZACIÓN Y CONFIRMACIÓN DE VIAJE
     // ==========================================
     const btnCotizar = document.querySelector('.panel-pedido .btn-principal');
     const modalConfirmacion = document.getElementById('modal-confirmacion');
@@ -331,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let datosViajeTemporal = null;
 
     if (btnCotizar && document.body.classList.contains('body-cliente')) {
-        btnCotizar.addEventListener('click', () => {
+        btnCotizar.addEventListener('click', async () => {
             const origenInput = document.getElementById('origen');
             const destinoInput = document.getElementById('destino');
             const vehiculoActivo = document.querySelector('.opcion-card.activa .nombre-vehiculo');
@@ -343,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const tipoVehiculo = vehiculoActivo ? vehiculoActivo.innerText : 'Moto';
 
             if (!origen || !destino) {
-                alert('⚠️ Por favor, completá la dirección de origen y de destino.');
+                mostrarModalMensaje('Faltan datos', 'Completá origen y destino.', 'advertencia');
                 return;
             }
 
@@ -351,54 +363,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const fechaInputVal = inputFechaProgramada ? inputFechaProgramada.value.trim() : '';
 
             if (!tipoViajeVal) {
-                alert('⚠️ Por favor, indicá cuándo necesitás el flete (Lo antes posible o Programar).');
+                mostrarModalMensaje('Falta programación', 'Indicá cuándo necesitás el flete.', 'advertencia');
                 return;
             }
 
-            if (tipoViajeVal === 'programado' && !fechaInputVal) {
-                alert('⚠️ Seleccionaste viaje programado, por favor elegí una fecha y hora.');
-                return;
-            }
-
-            // Validar estrictamente que la fecha/hora programada no sea en el pasado
-            if (tipoViajeVal === 'programado' && fechaInputVal) {
-                const fechaSeleccionada = new Date(fechaInputVal).getTime();
-                const fechaActual = new Date().getTime();
-
-                if (fechaSeleccionada < fechaActual) {
-                    alert('⚠️ No podés programar un flete en el pasado. Elegí una fecha y hora válida.');
-                    return;
-                }
-            }
-
-            let proveedores = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.includes('@')) {
-                    try {
-                        const usuario = JSON.parse(localStorage.getItem(key));
-                        if (usuario && usuario.rol === 'proveedor' && usuario.tarifas) {
-                            proveedores.push(usuario);
-                        }
-                    } catch (e) {}
-                }
-            }
-
-            let precioBase = 12000;
-            if (tipoVehiculo === 'Pickup') precioBase = 25000;
-            if (tipoVehiculo === 'Camión') precioBase = 45000;
-            if (tipoVehiculo === 'Auto') precioBase = 16000;
-            if (tipoVehiculo === 'Utilitario') precioBase = 32000;
-
+            let precioKmBase = 1200;
             let costoPisoUnitario = 3000;
             let costoPeonUnitario = 8000;
 
-            if (proveedores.length > 0) {
-                const provEjemplo = proveedores[0];
-                if (provEjemplo.tarifas.precioKm) precioBase = provEjemplo.tarifas.precioKm * 15;
-                if (provEjemplo.tarifas.precioPiso) costoPisoUnitario = provEjemplo.tarifas.precioPiso;
-                if (provEjemplo.tarifas.precioPeon) costoPeonUnitario = provEjemplo.tarifas.precioPeon;
+            try {
+                const snapshotProv = await db.collection("usuarios").where("rol", "==", "proveedor").get();
+                snapshotProv.forEach(doc => {
+                    const provData = doc.data();
+                    if (provData.vehiculos) {
+                        const vehEncontrado = provData.vehiculos.find(v => v.tipo === tipoVehiculo);
+                        if (vehEncontrado && vehEncontrado.precioKm) {
+                            precioKmBase = vehEncontrado.precioKm;
+                        }
+                    }
+                    if (provData.tarifas) {
+                        if (provData.tarifas.precioPiso) costoPisoUnitario = provData.tarifas.precioPiso;
+                        if (provData.tarifas.precioPeon) costoPeonUnitario = provData.tarifas.precioPeon;
+                    }
+                });
+            } catch (e) {
+                console.error("Error buscando tarifas:", e);
             }
+
+            let precioBase = precioKmBase * 15; 
+            if (tipoVehiculo === 'Pickup') precioBase = precioKmBase * 18;
+            if (tipoVehiculo === 'Camión') precioBase = precioKmBase * 25;
 
             const quierePeon = document.getElementById('peon').checked;
             const cantPeones = parseInt(document.getElementById('cantidad-peones').value) || 1;
@@ -423,8 +417,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            const currentUser = auth.currentUser;
+
             datosViajeTemporal = {
                 id: Date.now(),
+                clienteEmail: currentUser ? currentUser.email : 'Anónimo',
                 origen,
                 destino,
                 vehiculo: tipoVehiculo,
@@ -468,247 +465,347 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (btnConfirmarViaje) {
-        btnConfirmarViaje.addEventListener('click', () => {
+        btnConfirmarViaje.addEventListener('click', async () => {
             if (!datosViajeTemporal) return;
 
-            let viajes = JSON.parse(localStorage.getItem('fletarg_viajes')) || [];
-            viajes.push(datosViajeTemporal);
-            localStorage.setItem('fletarg_viajes', JSON.stringify(viajes));
+            try {
+                await db.collection("viajes").doc(datosViajeTemporal.id.toString()).set(datosViajeTemporal);
 
-            // AUDITORÍA: Registrar la creación del viaje
-            const emailActivoLog = localStorage.getItem('fletarg_usuario_activo') || 'Cliente';
-            registrarAccionEnBitacora('VIAJE_CREADO', `Nuevo flete creado por ${datosViajeTemporal.precio} de ${datosViajeTemporal.origen} a ${datosViajeTemporal.destino}`, emailActivoLog);
+                const userEmail = auth.currentUser ? auth.currentUser.email : 'Cliente';
+                registrarAccionEnBitacora('VIAJE_CREADO', `Flete creado por ${datosViajeTemporal.precio}`, userEmail);
 
-            alert('¡Flete creado con éxito! Publicado para los proveedores.');
-            modalConfirmacion.classList.add('oculto');
-            
-            // --- LIMPIEZA TOTAL Y PROFUNDA DEL FORMULARIO ---
-            document.getElementById('origen').value = '';
-            document.getElementById('destino').value = '';
-            document.getElementById('detalle-carga').value = '';
-            
-            const inputTipoViajeSel = document.getElementById('tipo-viaje-seleccion');
-            if (inputTipoViajeSel) inputTipoViajeSel.value = '';
-
-            document.querySelectorAll('.btn-opcion-cuando').forEach(b => b.classList.remove('activo'));
-            
-            const contenedorFecha = document.getElementById('contenedor-fecha');
-            if (contenedorFecha) contenedorFecha.style.display = 'none';
-
-            const inputFechaProgramada = document.getElementById('fecha-programada');
-            if (inputFechaProgramada) inputFechaProgramada.value = '';
-
-            const textoFechaElegida = document.getElementById('texto-fecha-elegida');
-            if (textoFechaElegida) {
-                textoFechaElegida.style.display = 'none';
-                textoFechaElegida.innerText = '';
+                modalConfirmacion.classList.add('oculto');
+                mostrarModalMensaje('¡Flete publicado!', 'Tu pedido de flete ya está visible para los proveedores.', 'exito', () => {
+                    document.getElementById('origen').value = '';
+                    document.getElementById('destino').value = '';
+                    document.getElementById('detalle-carga').value = '';
+                    datosViajeTemporal = null;
+                });
+            } catch (error) {
+                console.error("Error al publicar:", error);
+                mostrarModalMensaje('Error', 'Hubo un error al publicar el viaje.', 'error');
             }
-
-            const checkPeon = document.getElementById('peon');
-            const inputCantPeones = document.getElementById('cantidad-peones');
-            if (checkPeon) {
-                checkPeon.checked = false;
-                checkPeon.dispatchEvent(new Event('change'));
-            }
-            if (inputCantPeones) inputCantPeones.value = '';
-
-            const checkEscalera = document.getElementById('escalera');
-            const inputCantPisos = document.getElementById('cantidad-pisos');
-            if (checkEscalera) {
-                checkEscalera.checked = false;
-                checkEscalera.dispatchEvent(new Event('change'));
-            }
-            if (inputCantPisos) inputCantPisos.value = '';
-
-            const selectPago = document.getElementById('metodo-pago');
-            if (selectPago) selectPago.value = 'efectivo';
-
-            datosViajeTemporal = null;
         });
     }
 
-    // ========================================
-    // 8. RENDERIZAR VIAJES DEL PROVEEDOR (Con Filtros)
     // ==========================================
-    window.filtroVehiculoActual = 'todos'; // Variable global para recordar el filtro activo
-
+    // 8. RENDERIZAR VIAJES DEL PROVEEDOR
+    // ==========================================
+    window.filtroVehiculoActual = 'todos'; 
     window.renderizarViajesProveedor = function(filtro = 'todos') {
-        const contenedorPendientes = document.getElementById('lista-viajes-pendientes');
-        const contenedorAceptados = document.getElementById('lista-viajes-aceptados');
-        const contenedorCompletados = document.getElementById('lista-viajes-completados');
-        
-        let viajes = JSON.parse(localStorage.getItem('fletarg_viajes')) || [];
-        
-        let pendientes = viajes.filter(v => v.estado === 'pendiente');
-        const aceptados = viajes.filter(v => v.estado === 'aceptado');
-        const completados = viajes.filter(v => v.estado === 'completado');
-
-        // Aplicar filtro por vehículo en pendientes si corresponde
-        if (filtro !== 'todos') {
-            pendientes = pendientes.filter(v => v.vehiculo === filtro);
-        }
-
-        const btnPendientes = document.getElementById('btn-tab-pendientes');
-        const btnAceptados = document.getElementById('btn-tab-aceptados');
-        const btnCompletados = document.getElementById('btn-tab-completados');
-
-        if (btnPendientes) btnPendientes.innerText = `Pendientes (${viajes.filter(v => v.estado === 'pendiente').length})`;
-        if (btnAceptados) btnAceptados.innerText = `Aceptados (${aceptados.length})`;
-        if (btnCompletados) btnCompletados.innerText = `Completados (${completados.length})`;
-
-        if (contenedorPendientes) {
-            contenedorPendientes.innerHTML = pendientes.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">No hay viajes disponibles para este filtro.</p>' : '';
-            pendientes.forEach(viaje => {
-                contenedorPendientes.innerHTML += `
-                    <div class="tarjeta-viaje" data-id="${viaje.id}">
-                        <div class="viaje-precio">
-                            <h4>${viaje.precio}</h4>
-                            <span class="distancia">${viaje.vehiculo}</span>
-                        </div>
-                        <div class="viaje-ruta">
-                            <p>📍 <strong>Origen:</strong> ${viaje.origen}</p>
-                            <p>🏁 <strong>Destino:</strong> ${viaje.destino}</p>
-                            <p>📅 <strong>Cuándo:</strong> ${viaje.detallesExtra?.tipoViaje || '⚡ Lo antes posible'}</p>
-                        </div>
-                        <div class="acciones-viaje" style="display:flex; gap:10px; margin-top:15px;">
-                            <button class="btn-rechazar" onclick="gestionarViaje(${viaje.id}, 'rechazado')">Rechazar</button>
-                            <button class="btn-aceptar" onclick="gestionarViaje(${viaje.id}, 'aceptado')">Aceptar</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        if (contenedorAceptados) {
-            contenedorAceptados.innerHTML = aceptados.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">No tenés viajes en curso.</p>' : '';
-            aceptados.forEach(viaje => {
-                contenedorAceptados.innerHTML += `
-                    <div class="tarjeta-viaje" data-id="${viaje.id}">
-                        <div class="viaje-precio">
-                            <h4>${viaje.precio}</h4>
-                            <span class="distancia" style="background-color: #e2f0d9; color: #385723;">Aceptado</span>
-                        </div>
-                        <div class="viaje-ruta">
-                            <p>📍 <strong>Origen:</strong> ${viaje.origen}</p>
-                            <p>🏁 <strong>Destino:</strong> ${viaje.destino}</p>
-                        </div>
-                        <button class="btn-principal" style="background-color: #28a745; margin-top:15px;" onclick="finalizarViajeConCalificacion(${viaje.id})">Finalizar viaje</button>
-                    </div>
-                `;
-            });
-        }
-
-        if (contenedorCompletados) {
-            contenedorCompletados.innerHTML = completados.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">Sin historial todavía.</p>' : '';
-            completados.forEach(viaje => {
-                contenedorCompletados.innerHTML += `
-                    <div class="tarjeta-viaje" style="opacity: 0.85;" data-id="${viaje.id}">
-                        <div class="viaje-precio">
-                            <h4>${viaje.precio}</h4>
-                            <span class="distancia" style="background-color: #eee; color: #666;">Completado</span>
-                        </div>
-                        <div class="viaje-ruta">
-                            <p>📍 <strong>Origen:</strong> ${viaje.origen}</p>
-                            <p>🏁 <strong>Destino:</strong> ${viaje.destino}</p>
-                        </div>
-                    </div>
-                `;
-            });
-        }
+        window.filtroVehiculoActual = filtro;
     };
 
-    // Ejecutar al cargar la página si estamos en el panel de proveedor
-    renderizarViajesProveedor();
+    const contenedorPendientes = document.getElementById('lista-viajes-pendientes');
+    const contenedorAceptados = document.getElementById('lista-viajes-aceptados');
+    const contenedorCompletados = document.getElementById('lista-viajes-completados');
+
+    if (contenedorPendientes || contenedorAceptados || contenedorCompletados) {
+        db.collection("viajes").onSnapshot((snapshot) => {
+            let viajes = [];
+            snapshot.forEach(doc => viajes.push(doc.data()));
+
+            const filtroActual = window.filtroVehiculoActual || 'todos';
+            let pendientes = viajes.filter(v => v.estado === 'pendiente');
+            const aceptados = viajes.filter(v => v.estado === 'aceptado');
+            const completados = viajes.filter(v => v.estado === 'completado');
+
+            if (filtroActual !== 'todos') {
+                pendientes = pendientes.filter(v => v.vehiculo === filtroActual);
+            }
+
+            const btnPendientes = document.getElementById('btn-tab-pendientes');
+            const btnAceptados = document.getElementById('btn-tab-aceptados');
+            const btnCompletados = document.getElementById('btn-tab-completados');
+
+            if (btnPendientes) btnPendientes.innerText = `Pendientes (${viajes.filter(v => v.estado === 'pendiente').length})`;
+            if (btnAceptados) btnAceptados.innerText = `Aceptados (${aceptados.length})`;
+            if (btnCompletados) btnCompletados.innerText = `Completados (${completados.length})`;
+
+            if (contenedorPendientes) {
+                contenedorPendientes.innerHTML = pendientes.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">No hay viajes disponibles.</p>' : '';
+                pendientes.forEach(viaje => {
+                    contenedorPendientes.innerHTML += `
+                        <div class="tarjeta-viaje" data-id="${viaje.id}">
+                            <div class="viaje-precio">
+                                <h4>${viaje.precio}</h4>
+                                <span class="distancia">${viaje.vehiculo}</span>
+                            </div>
+                            <div class="viaje-ruta">
+                                <p>📍 <strong>Origen:</strong> ${viaje.origen}</p>
+                                <p>🏁 <strong>Destino:</strong> ${viaje.destino}</p>
+                                <p>📅 <strong>Cuándo:</strong> ${viaje.detallesExtra?.tipoViaje || '⚡ Lo antes posible'}</p>
+                            </div>
+                            <div class="acciones-viaje" style="display:flex; gap:10px; margin-top:15px;">
+                                <button class="btn-rechazar" onclick="gestionarViaje(${viaje.id}, 'rechazado')">Rechazar</button>
+                                <button class="btn-aceptar" onclick="gestionarViaje(${viaje.id}, 'aceptado')">Aceptar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            if (contenedorAceptados) {
+                contenedorAceptados.innerHTML = aceptados.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">No tenés viajes en curso.</p>' : '';
+                aceptados.forEach(viaje => {
+                    contenedorAceptados.innerHTML += `
+                        <div class="tarjeta-viaje" data-id="${viaje.id}">
+                            <div class="viaje-precio">
+                                <h4>${viaje.precio}</h4>
+                                <span class="distancia" style="background-color: #e2f0d9; color: #385723;">Aceptado</span>
+                            </div>
+                            <div class="viaje-ruta">
+                                <p>📍 <strong>Origen:</strong> ${viaje.origen}</p>
+                                <p>🏁 <strong>Destino:</strong> ${viaje.destino}</p>
+                            </div>
+                            <button class="btn-principal" style="background-color: #28a745; margin-top:15px;" onclick="finalizarViajeConCalificacion(${viaje.id})">Finalizar viaje</button>
+                        </div>
+                    `;
+                });
+            }
+
+            if (contenedorCompletados) {
+                contenedorCompletados.innerHTML = completados.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">Sin historial todavía.</p>' : '';
+                completados.forEach(viaje => {
+                    contenedorCompletados.innerHTML += `
+                        <div class="tarjeta-viaje" style="opacity: 0.85;" data-id="${viaje.id}">
+                            <div class="viaje-precio">
+                                <h4>${viaje.precio}</h4>
+                                <span class="distancia" style="background-color: #eee; color: #666;">Completado</span>
+                            </div>
+                            <div class="viaje-ruta">
+                                <p>📍 <strong>Origen:</strong> ${viaje.origen}</p>
+                                <p>🏁 <strong>Destino:</strong> ${viaje.destino}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        });
+    }
 
     // ==========================================
-    // 9. RENDERIZAR VIAJES DEL CLIENTE
+    // 8.1. VEHÍCULOS DEL PROVEEDOR
+    // ==========================================
+    const listaVehiculosProv = document.getElementById('lista-vehiculos-proveedor');
+    if (listaVehiculosProv) {
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) return;
+            try {
+                let docSnap = await db.collection("usuarios").doc(user.uid).get();
+                if (!docSnap.exists) {
+                    docSnap = await db.collection("usuarios").doc(user.email).get();
+                }
+
+                if (docSnap.exists) {
+                    const data = docSnap.data();
+                    const vehiculos = data.vehiculos || [];
+
+                    if (vehiculos.length === 0) {
+                        listaVehiculosProv.innerHTML = '<p style="color: #777; font-size: 14px;">No tenés vehículos registrados.</p>';
+                    } else {
+                        listaVehiculosProv.innerHTML = '';
+                        vehiculos.forEach(v => {
+                            const descTexto = v.descripcion ? `<br><small style="color: #666;">📝 ${v.descripcion}</small>` : '';
+                            listaVehiculosProv.innerHTML += `
+                                <div style="display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #eee;">
+                                    <div>
+                                        <strong>${v.tipo}</strong> (Patente: <span style="text-transform: uppercase;">${v.patente}</span>)<br>
+                                        💵 $ ${v.precioKm} / km
+                                        ${descTexto}
+                                    </div>
+                                    <button type="button" onclick="eliminarVehiculoProveedor(${v.id})" style="background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">Eliminar</button>
+                                </div>
+                            `;
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error("Error cargando vehículos:", e);
+            }
+        });
+    }
+
+    // ==========================================
+    // 9. VIAJES DEL CLIENTE
     // ==========================================
     const contenedorClientePendientes = document.getElementById('lista-cliente-pendientes');
     const contenedorClienteEnCurso = document.getElementById('lista-cliente-en-curso');
     const contenedorClienteHistorial = document.getElementById('lista-cliente-historial');
 
     if (contenedorClientePendientes || contenedorClienteEnCurso || contenedorClienteHistorial) {
-        let viajes = JSON.parse(localStorage.getItem('fletarg_viajes')) || [];
-        const misPendientes = viajes.filter(v => v.estado === 'pendiente');
-        const misEnCurso = viajes.filter(v => v.estado === 'aceptado');
-        const misHistorial = viajes.filter(v => v.estado === 'completado');
+        db.collection("viajes").onSnapshot((snapshot) => {
+            let viajes = [];
+            snapshot.forEach(doc => viajes.push(doc.data()));
 
-        const btnClP = document.getElementById('btn-cliente-pendientes');
-        const btnClEC = document.getElementById('btn-cliente-en-curso');
-        const btnClH = document.getElementById('btn-cliente-historial');
+            const misPendientes = viajes.filter(v => v.estado === 'pendiente');
+            const misEnCurso = viajes.filter(v => v.estado === 'aceptado');
+            const misHistorial = viajes.filter(v => v.estado === 'completado');
 
-        if (btnClP) btnClP.innerText = `Buscando (${misPendientes.length})`;
-        if (btnClEC) btnClEC.innerText = `En Camino (${misEnCurso.length})`;
-        if (btnClH) btnClH.innerText = `Historial (${misHistorial.length})`;
+            const btnClP = document.getElementById('btn-cliente-pendientes');
+            const btnClEC = document.getElementById('btn-cliente-en-curso');
+            const btnClH = document.getElementById('btn-cliente-historial');
 
-        if (contenedorClientePendientes) {
-            contenedorClientePendientes.innerHTML = misPendientes.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">No tenés fletes en búsqueda.</p>' : '';
-            misPendientes.forEach(v => {
-                contenedorClientePendientes.innerHTML += `
-                    <div class="tarjeta-viaje">
-                        <div class="viaje-precio"><h4>${v.precio}</h4><span class="distancia">Buscando</span></div>
-                        <div class="viaje-ruta"><p>📍 ${v.origen}</p><p>🏁 ${v.destino}</p></div>
-                    </div>
-                `;
-            });
-        }
+            if (btnClP) btnClP.innerText = `Buscando (${misPendientes.length})`;
+            if (btnClEC) btnClEC.innerText = `En Camino (${misEnCurso.length})`;
+            if (btnClH) btnClH.innerText = `Historial (${misHistorial.length})`;
 
-        if (contenedorClienteEnCurso) {
-            contenedorClienteEnCurso.innerHTML = misEnCurso.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">No tenés fletes en curso.</p>' : '';
-            misEnCurso.forEach(v => {
-                contenedorClienteEnCurso.innerHTML += `
-                    <div class="tarjeta-viaje">
-                        <div class="viaje-precio"><h4>${v.precio}</h4><span class="distancia" style="background:#e2f0d9; color:#385723;">En camino</span></div>
-                        <div class="viaje-ruta"><p>📍 ${v.origen}</p><p>🏁 ${v.destino}</p></div>
-                    </div>
-                `;
-            });
-        }
+            if (contenedorClientePendientes) {
+                contenedorClientePendientes.innerHTML = misPendientes.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">No tenés fletes en búsqueda.</p>' : '';
+                misPendientes.forEach(v => {
+                    contenedorClientePendientes.innerHTML += `
+                        <div class="tarjeta-viaje">
+                            <div class="viaje-precio"><h4>${v.precio}</h4><span class="distancia">Buscando</span></div>
+                            <div class="viaje-ruta"><p>📍 ${v.origen}</p><p>🏁 ${v.destino}</p></div>
+                        </div>
+                    `;
+                });
+            }
 
-        if (contenedorClienteHistorial) {
-            contenedorClienteHistorial.innerHTML = misHistorial.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">Sin historial.</p>' : '';
-            misHistorial.forEach(v => {
-                contenedorClienteHistorial.innerHTML += `
-                    <div class="tarjeta-viaje" style="opacity: 0.85;">
-                        <div class="viaje-precio"><h4>${v.precio}</h4><span class="distancia" style="background:#eee; color:#666;">Finalizado</span></div>
-                        <div class="viaje-ruta"><p>📍 ${v.origen}</p><p>🏁 ${v.destino}</p></div>
-                    </div>
-                `;
-            });
-        }
+            if (contenedorClienteEnCurso) {
+                contenedorClienteEnCurso.innerHTML = misEnCurso.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">No tenés fletes en curso.</p>' : '';
+                misEnCurso.forEach(v => {
+                    contenedorClienteEnCurso.innerHTML += `
+                        <div class="tarjeta-viaje">
+                            <div class="viaje-precio"><h4>${v.precio}</h4><span class="distancia" style="background:#e2f0d9; color:#385723;">En camino</span></div>
+                            <div class="viaje-ruta"><p>📍 ${v.origen}</p><p>🏁 ${v.destino}</p></div>
+                        </div>
+                    `;
+                });
+            }
+
+            if (contenedorClienteHistorial) {
+                contenedorClienteHistorial.innerHTML = misHistorial.length === 0 ? '<p style="color: #777; text-align: center; padding: 20px;">Sin historial.</p>' : '';
+                misHistorial.forEach(v => {
+                    contenedorClienteHistorial.innerHTML += `
+                        <div class="tarjeta-viaje" style="opacity: 0.85;">
+                            <div class="viaje-precio"><h4>${v.precio}</h4><span class="distancia" style="background:#eee; color:#666;">Finalizado</span></div>
+                            <div class="viaje-ruta"><p>📍 ${v.origen}</p><p>🏁 ${v.destino}</p></div>
+                        </div>
+                    `;
+                });
+            }
+        });
     }
 
     // ==========================================
-    // 10. RENDERIZAR DATOS EN PERFIL
+    // 10. PERFIL Y EDICIÓN
     // ==========================================
     const perfilNombre = document.getElementById('perfil-nombre');
     if (perfilNombre) {
-        if (!emailActivo) {
-            window.location.href = 'index.html';
-            return;
-        }
-        const datosUsuario = JSON.parse(localStorage.getItem(emailActivo));
-        if (datosUsuario) {
-            perfilNombre.innerText = `${datosUsuario.nombre} ${datosUsuario.apellido}`;
-            document.getElementById('perfil-email').innerText = datosUsuario.email;
-            document.getElementById('perfil-rol').innerText = datosUsuario.rol.toUpperCase();
-
-            const navPerfil = document.getElementById('nav-perfil');
-            if (navPerfil) {
-                if (datosUsuario.rol === 'cliente') {
-                    navPerfil.innerHTML = `
-                        <a href="cliente.html" class="nav-item"><span class="icono">🏠</span><span>Inicio</span></a>
-                        <a href="cliente-viajes.html" class="nav-item"><span class="icono">📦</span><span>Mis Viajes</span></a>
-                        <a href="perfil.html" class="nav-item activo"><span class="icono">👤</span><span>Perfil</span></a>
-                    `;
-                } else {
-                    navPerfil.innerHTML = `
-                        <a href="proveedor-perfil.html" class="nav-item"><span class="icono">📊</span><span>Mis Viajes</span></a>
-                        <a href="perfil.html" class="nav-item activo"><span class="icono">👤</span><span>Perfil</span></a>
-                    `;
-                }
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
             }
-        }
+
+            try {
+                let docSnap = await db.collection("usuarios").doc(user.uid).get();
+                if (!docSnap.exists) {
+                    docSnap = await db.collection("usuarios").doc(user.email).get();
+                }
+
+                if (docSnap.exists) {
+                    const datosUsuario = docSnap.data();
+                    
+                    perfilNombre.innerText = `${datosUsuario.nombre || ''} ${datosUsuario.apellido || ''}`.trim() || 'Usuario';
+                    
+                    const perfilEmail = document.getElementById('perfil-email');
+                    if (perfilEmail) perfilEmail.innerText = datosUsuario.email || user.email;
+                    
+                    const perfilRol = document.getElementById('perfil-rol');
+                    if (perfilRol && datosUsuario.rol) {
+                        perfilRol.innerText = datosUsuario.rol.toUpperCase();
+                    }
+
+                    const inputNombre = document.getElementById('editar-nombre');
+                    const inputApellido = document.getElementById('editar-apellido');
+                    if (inputNombre) inputNombre.value = datosUsuario.nombre || '';
+                    if (inputApellido) inputApellido.value = datosUsuario.apellido || '';
+
+                    const seccionTarifas = document.getElementById('seccion-tarifas-perfil');
+                    if (datosUsuario.rol === 'proveedor' && seccionTarifas) {
+                        seccionTarifas.style.display = 'block';
+                        const inputPrecioPiso = document.getElementById('editar-precio-piso');
+                        const inputPrecioPeon = document.getElementById('editar-precio-peon');
+                        
+                        if (inputPrecioPiso && datosUsuario.tarifas) {
+                            inputPrecioPiso.value = datosUsuario.tarifas.precioPiso || 0;
+                        }
+                        if (inputPrecioPeon && datosUsuario.tarifas) {
+                            inputPrecioPeon.value = datosUsuario.tarifas.precioPeon || 0;
+                        }
+                    }
+
+                    const navPerfil = document.getElementById('nav-perfil');
+                    if (navPerfil) {
+                        if (datosUsuario.rol === 'cliente') {
+                            navPerfil.innerHTML = `
+                                <a href="cliente.html" class="nav-item"><span class="icono">🏠</span><span>Inicio</span></a>
+                                <a href="cliente-viajes.html" class="nav-item"><span class="icono">📦</span><span>Mis Viajes</span></a>
+                                <a href="perfil.html" class="nav-item activo"><span class="icono">👤</span><span>Perfil</span></a>
+                            `;
+                        } else {
+                            navPerfil.innerHTML = `
+                                <a href="proveedor-perfil.html" class="nav-item"><span class="icono">📊</span><span>Mis Viajes</span></a>
+                                <a href="perfil.html" class="nav-item activo"><span class="icono">👤</span><span>Perfil</span></a>
+                            `;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error al cargar perfil:", error);
+            }
+        });
+    }
+
+    const formEditarPerfil = document.getElementById('form-editar-perfil');
+    if (formEditarPerfil) {
+        formEditarPerfil.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const nuevoNombre = document.getElementById('editar-nombre').value.trim();
+            const nuevoApellido = document.getElementById('editar-apellido').value.trim();
+
+            if (!nuevoNombre || !nuevoApellido) {
+                mostrarModalMensaje('Campos incompletos', 'Nombre y apellido obligatorios.', 'advertencia');
+                return;
+            }
+
+            try {
+                let userRef = db.collection("usuarios").doc(user.uid);
+                let docSnap = await userRef.get();
+                if (!docSnap.exists) {
+                    userRef = db.collection("usuarios").doc(user.email);
+                    docSnap = await userRef.get();
+                }
+
+                if (!docSnap.exists) return;
+
+                let userData = docSnap.data();
+                userData.nombre = nuevoNombre;
+                userData.apellido = nuevoApellido;
+
+                if (userData.rol === 'proveedor') {
+                    const nuevoPiso = parseFloat(document.getElementById('editar-precio-piso').value) || 0;
+                    const nuevoPeon = parseFloat(document.getElementById('editar-precio-peon').value) || 0;
+
+                    if (!userData.tarifas) userData.tarifas = {};
+                    userData.tarifas.precioPiso = nuevoPiso;
+                    userData.tarifas.precioPeon = nuevoPeon;
+                }
+
+                await userRef.set(userData);
+                mostrarModalMensaje('¡Actualizado!', 'Perfil actualizado con éxito.', 'exito', () => {
+                    location.reload();
+                });
+            } catch (error) {
+                console.error("Error al actualizar perfil:", error);
+                mostrarModalMensaje('Error', 'Hubo un error al guardar los cambios.', 'error');
+            }
+        });
     }
 
     // ==========================================
@@ -716,60 +813,110 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     const statGanancias = document.getElementById('stat-ganancias');
     if (statGanancias) {
-        let viajes = JSON.parse(localStorage.getItem('fletarg_viajes')) || [];
-        const completados = viajes.filter(v => v.estado === 'completado');
+        db.collection("viajes").onSnapshot((snapshot) => {
+            let viajes = [];
+            snapshot.forEach(doc => viajes.push(doc.data()));
+            const completados = viajes.filter(v => v.estado === 'completado');
 
-        let totalGanancias = 0;
-        let sumaCalificaciones = 0;
+            let totalGanancias = 0;
+            let sumaCalificaciones = 0;
 
-        completados.forEach(v => {
-            if (v.precio) {
-                totalGanancias += parseInt(v.precio.replace('$', '').replace(/\./g, '').trim()) || 0;
-            }
-            if (v.calificacionProveedor) {
-                sumaCalificaciones += v.calificacionProveedor;
-            }
+            completados.forEach(v => {
+                if (v.precio) {
+                    totalGanancias += parseInt(v.precio.replace('$', '').replace(/\./g, '').trim()) || 0;
+                }
+                if (v.calificacionProveedor) {
+                    sumaCalificaciones += v.calificacionProveedor;
+                }
+            });
+
+            document.getElementById('stat-ganancias').innerText = `$ ${totalGanancias.toLocaleString('es-AR')}`;
+            document.getElementById('stat-viajes').innerText = completados.length;
+            
+            const promedio = completados.length > 0 ? (sumaCalificaciones / completados.length).toFixed(1) : '-';
+            document.getElementById('stat-calificacion').innerText = `⭐ ${promedio}`;
         });
-
-        document.getElementById('stat-ganancias').innerText = `$ ${totalGanancias.toLocaleString('es-AR')}`;
-        document.getElementById('stat-viajes').innerText = completados.length;
-        
-        const promedio = completados.length > 0 ? (sumaCalificaciones / completados.length).toFixed(1) : '-';
-        document.getElementById('stat-calificacion').innerText = `⭐ ${promedio}`;
     }
 
-    // ==========================================
-    // 12. MODO OSCURO (CARGA INICIAL)
-    // ==========================================
     if (localStorage.getItem('fletarg_dark_mode') === 'enabled') {
         document.body.classList.add('dark-mode');
     }
 
-}); // FIN DE DOMContentLoaded
+}); // FIN DOMContentLoaded
 
 
 // ==========================================
-// FUNCIONES GLOBALES (FUERA DE DOMContentLoaded)
-
+// FUNCIONES GLOBALES Y MODAL PERSONALIZADO
 // ==========================================
 
-// SISTEMA CENTRALIZADO DE AUDITORÍA Y LOGS
-function registrarAccionEnBitacora(tipoAccion, descripcion, usuarioInvolucrado = 'Anónimo') {
-    const bitacora = JSON.parse(localStorage.getItem('fletarg_auditoria')) || [];
+function mostrarModalMensaje(titulo, mensaje, tipo = 'exito', callback = null) {
+    let modal = document.getElementById('modal-global');
     
+    if (!modal) {
+        const divModal = document.createElement('div');
+        divModal.id = 'modal-global';
+        divModal.className = 'modal-overlay oculto';
+        divModal.innerHTML = `
+            <div class="modal-content" style="text-align: center; padding: 30px 20px;">
+                <div id="modal-icono" style="font-size: 40px; margin-bottom: 10px;">✨</div>
+                <h3 id="modal-titulo" style="font-size: 18px; color: #2b3a4a; margin-bottom: 8px;">Aviso</h3>
+                <p id="modal-texto" style="font-size: 14px; color: #666; margin-bottom: 20px; line-height: 1.4;"></p>
+                <button type="button" id="btn-modal-aceptar" class="btn-principal" style="padding: 12px; font-size: 14px;">Aceptar</button>
+            </div>
+        `;
+        document.body.appendChild(divModal);
+        modal = divModal;
+
+        document.getElementById('btn-modal-aceptar').addEventListener('click', () => {
+            cerrarModalGlobal();
+            if (typeof callback === 'function') callback();
+        });
+    } else {
+        const btnAceptar = document.getElementById('btn-modal-aceptar');
+        if (btnAceptar) {
+            const nuevoBtn = btnAceptar.cloneNode(true);
+            btnAceptar.parentNode.replaceChild(nuevoBtn, btnAceptar);
+            nuevoBtn.addEventListener('click', () => {
+                cerrarModalGlobal();
+                if (typeof callback === 'function') callback();
+            });
+        }
+    }
+
+    const tituloEl = document.getElementById('modal-titulo');
+    const textoEl = document.getElementById('modal-texto');
+    const iconoEl = document.getElementById('modal-icono');
+
+    if (tituloEl) tituloEl.innerText = titulo;
+    if (textoEl) textoEl.innerText = mensaje;
+
+    if (iconoEl) {
+        if (tipo === 'error') {
+            iconoEl.innerText = '⚠️';
+        } else if (tipo === 'advertencia') {
+            iconoEl.innerText = '🔒';
+        } else {
+            iconoEl.innerText = '✨';
+        }
+    }
+
+    modal.classList.remove('oculto');
+}
+
+function cerrarModalGlobal() {
+    const modal = document.getElementById('modal-global');
+    if (modal) modal.classList.add('oculto');
+}
+
+function registrarAccionEnBitacora(tipoAccion, descripcion, usuarioInvolucrado = 'Anónimo') {
     const nuevoRegistro = {
         id: Date.now(),
-        fechaHora: new Date().toLocaleString('es-AR', { 
-            day: '2-digit', month: '2-digit', year: 'numeric', 
-            hour: '2-digit', minute: '2-digit', second: '2-digit' 
-        }),
+        fechaHora: new Date().toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         tipo: tipoAccion, 
         descripcion: descripcion,
         usuario: usuarioInvolucrado
     };
-
-    bitacora.unshift(nuevoRegistro);
-    localStorage.setItem('fletarg_auditoria', JSON.stringify(bitacora));
+    db.collection("auditoria").doc(nuevoRegistro.id.toString()).set(nuevoRegistro).catch(err => {});
 }
 
 function mostrarFormulario(rol) {
@@ -808,54 +955,179 @@ function cambiarPestanaCliente(nombrePestana) {
     if (event && event.target) event.target.classList.add('activa');
 }
 
-function gestionarViaje(idViaje, nuevoEstado) {
-    let viajes = JSON.parse(localStorage.getItem('fletarg_viajes')) || [];
-    viajes = viajes.map(v => {
-        if (v.id === idViaje) v.estado = nuevoEstado;
-        return v;
-    });
-    localStorage.setItem('fletarg_viajes', JSON.stringify(viajes));
-
-    // AUDITORÍA: Registrar cambio de estado del viaje
-    const proveedorActivo = localStorage.getItem('fletarg_usuario_activo') || 'Proveedor';
-    registrarAccionEnBitacora('ESTADO_VIAJE', `El viaje ID ${idViaje} cambió a estado: ${nuevoEstado}`, proveedorActivo);
-
-    alert(`El viaje fue ${nuevoEstado}`);
-    location.reload();
+function togglePrecioPeon(select) {
+    const contenedor = document.getElementById('contenedor-precio-peon');
+    const inputPrecio = document.getElementById('precio-peon');
+    if (select.value === 'si') {
+        contenedor.style.display = 'block';
+    } else {
+        contenedor.style.display = 'none';
+        if (inputPrecio) inputPrecio.value = '';
+    }
 }
 
-function finalizarViajeConCalificacion(idViaje) {
+async function agregarVehiculoProveedor() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const tipo = document.getElementById('nuevo-tipo-vehiculo').value;
+    const patenteInput = document.getElementById('nueva-patente');
+    const patente = patenteInput ? patenteInput.value.trim().toUpperCase() : '';
+    const precioKm = parseFloat(document.getElementById('nuevo-precio-km').value);
+    const descripcion = document.getElementById('nueva-descripcion').value.trim();
+
+    const regexPatente = /^[A-Z0-9]+$/;
+    if (!patente || !regexPatente.test(patente)) {
+        mostrarModalMensaje('Patente inválida', 'Debe contener solo letras y números.', 'advertencia');
+        if (patenteInput) patenteInput.focus();
+        return;
+    }
+
+    if (!precioKm || precioKm <= 0) {
+        mostrarModalMensaje('Valor inválido', 'Ingresá un valor por kilómetro válido.', 'advertencia');
+        return;
+    }
+
+    try {
+        let userRef = db.collection("usuarios").doc(user.uid);
+        let docSnap = await userRef.get();
+        if (!docSnap.exists) {
+            userRef = db.collection("usuarios").doc(user.email);
+            docSnap = await userRef.get();
+        }
+        
+        if (docSnap.exists) {
+            let userData = docSnap.data();
+            let vehiculos = userData.vehiculos || [];
+
+            const patenteExistente = vehiculos.some(v => v.patente === patente);
+            if (patenteExistente) {
+                mostrarModalMensaje('Patente duplicada', 'Ya tenés un vehículo registrado con esa patente.', 'advertencia');
+                return;
+            }
+
+            vehiculos.push({
+                id: Date.now(),
+                tipo: tipo,
+                patente: patente,
+                precioKm: precioKm,
+                descripcion: descripcion
+            });
+
+            await userRef.update({ vehiculos: vehiculos });
+            mostrarModalMensaje('¡Vehículo agregado!', 'Registrado con éxito.', 'exito', () => {
+                location.reload();
+            });
+        }
+    } catch (error) {
+        console.error("Error al agregar vehículo:", error);
+        mostrarModalMensaje('Error', 'No se pudo guardar el vehículo.', 'error');
+    }
+}
+
+async function eliminarVehiculoProveedor(idVehiculo) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+        let userRef = db.collection("usuarios").doc(user.uid);
+        let docSnap = await userRef.get();
+        if (!docSnap.exists) {
+            userRef = db.collection("usuarios").doc(user.email);
+            docSnap = await userRef.get();
+        }
+        
+        if (docSnap.exists) {
+            let userData = docSnap.data();
+            let vehiculos = userData.vehiculos || [];
+
+            vehiculos = vehiculos.filter(v => v.id !== idVehiculo);
+
+            await userRef.update({ vehiculos: vehiculos });
+            mostrarModalMensaje('Vehículo eliminado', 'Eliminado correctamente.', 'exito', () => {
+                location.reload();
+            });
+        }
+    } catch (error) {
+        console.error("Error al eliminar vehículo:", error);
+        mostrarModalMensaje('Error', 'No se pudo eliminar el vehículo.', 'error');
+    }
+}
+
+async function gestionarViaje(idViaje, nuevoEstado) {
+    try {
+        await db.collection("viajes").doc(idViaje.toString()).update({ estado: nuevoEstado });
+        const user = auth.currentUser;
+        registrarAccionEnBitacora('ESTADO_VIAJE', `Viaje ID ${idViaje} cambió a: ${nuevoEstado}`, user ? user.email : 'Proveedor');
+        mostrarModalMensaje('Actualizado', `El viaje fue ${nuevoEstado} exitosamente.`, 'exito');
+    } catch (error) {
+        mostrarModalMensaje('Error', 'Hubo un error al actualizar el estado.', 'error');
+    }
+}
+
+async function finalizarViajeConCalificacion(idViaje) {
     let calificacionProv = prompt('Calificá la experiencia con el cliente (1 a 5):', '5');
     if (calificacionProv === null) return; 
 
     let estrellas = parseInt(calificacionProv);
     if (isNaN(estrellas) || estrellas < 1 || estrellas > 5) {
-        alert('Ingresá un número válido entre 1 y 5.');
+        mostrarModalMensaje('Valor inválido', 'Ingresá un número entre 1 y 5.', 'advertencia');
         return;
     }
 
-    let viajes = JSON.parse(localStorage.getItem('fletarg_viajes')) || [];
-    viajes = viajes.map(v => {
-        if (v.id === idViaje) {
-            v.estado = 'completado';
-            v.calificacionProveedor = estrellas; 
-        }
-        return v;
-    });
-
-    localStorage.setItem('fletarg_viajes', JSON.stringify(viajes));
-
-    // AUDITORÍA: Registrar finalización y calificación
-    const provFinalizador = localStorage.getItem('fletarg_usuario_activo') || 'Proveedor';
-    registrarAccionEnBitacora('VIAJE_FINALIZADO', `Viaje ID ${idViaje} finalizado. Calificación otorgada: ${estrellas} estrellas`, provFinalizador);
-
-    alert('¡Viaje finalizado y archivado con éxito!');
-    location.reload();
+    try {
+        await db.collection("viajes").doc(idViaje.toString()).update({
+            estado: 'completado',
+            calificacionProveedor: estrellas
+        });
+        const user = auth.currentUser;
+        registrarAccionEnBitacora('VIAJE_FINALIZADO', `Viaje ID ${idViaje} finalizado. Calificación: ${estrellas} estrellas`, user ? user.email : 'Proveedor');
+        mostrarModalMensaje('¡Viaje finalizado!', 'Servicio completado con éxito.', 'exito');
+    } catch (error) {
+        mostrarModalMensaje('Error', 'Hubo un error al finalizar el viaje.', 'error');
+    }
 }
 
-function cerrarSesion() {
-    localStorage.removeItem('fletarg_usuario_activo');
-    window.location.href = 'index.html';
+async function cerrarSesion() {
+    try {
+        await auth.signOut();
+        window.location.href = 'index.html';
+    } catch (error) {}
+}
+
+async function borrarCuenta() {
+    const user = auth.currentUser;
+    if (!user) {
+        mostrarModalMensaje('Aviso', 'No hay sesión activa.', 'advertencia');
+        return;
+    }
+
+    const confirmacion2 = prompt('⚠️ ¿Estás COMPLETAMENTE seguro? Escribí la palabra BORRAR en mayúsculas:');
+    if (confirmacion2 !== 'BORRAR') {
+        mostrarModalMensaje('Operación cancelada', 'La palabra no coincide.', 'advertencia');
+        return;
+    }
+
+    try {
+        const uidUsuario = user.uid;
+        const emailUsuario = user.email;
+
+        await db.collection("usuarios").doc(uidUsuario).delete().catch(() => {});
+        await db.collection("usuarios").doc(emailUsuario).delete().catch(() => {});
+        
+        await user.delete();
+
+        mostrarModalMensaje('Cuenta eliminada', 'Tus datos fueron eliminados de la nube.', 'exito', () => {
+            window.location.href = 'index.html';
+        });
+    } catch (error) {
+        console.error("Error al borrar cuenta:", error);
+        if (error.code === 'auth/requires-recent-login') {
+            mostrarModalMensaje('Seguridad', 'Volvé a iniciar sesión para borrar la cuenta.', 'advertencia');
+        } else {
+            mostrarModalMensaje('Error', 'Ocurrió un error al borrar la cuenta: ' + error.message, 'error');
+        }
+    }
 }
 
 function toggleDarkMode() {
@@ -867,128 +1139,28 @@ function toggleDarkMode() {
     }
 }
 
-function togglePrecioPeon(select) {
-    const contenedor = document.getElementById('contenedor-precio-peon');
-    const inputPrecio = document.getElementById('precio-peon');
-    
-    if (select.value === 'si') {
-        contenedor.style.display = 'block';
-    } else {
-        contenedor.style.display = 'none';
-        if (inputPrecio) inputPrecio.value = '';
-    }
-}
-
-// Función global para manejar los clics en los botones de filtro del proveedor
 function filtrarViajes(tipoVehiculo, botonElemento) {
-    // Cambiar clases activas en los botones de filtro
     const botones = document.querySelectorAll('.btn-filtro');
     botones.forEach(b => b.classList.remove('activo'));
     botonElemento.classList.add('activo');
-
-    // Volver a renderizar la lista aplicando el filtro
     if (typeof renderizarViajesProveedor === 'function') {
         renderizarViajesProveedor(tipoVehiculo);
     }
 }
 
-// ==========================================
-// SISTEMA CENTRALIZADO DE REGISTRO / AUDITORÍA
-// ==========================================
-function registrarAccionEnBitacora(tipoAccion, descripcion, usuarioInvolucrado = 'Anónimo') {
-    const bitacora = JSON.parse(localStorage.getItem('fletarg_auditoria')) || [];
-    
-    const nuevoRegistro = {
-        id: Date.now(),
-        fechaHora: new Date().toLocaleString('es-AR', { 
-            day: '2-digit', month: '2-digit', year: 'numeric', 
-            hour: '2-digit', minute: '2-digit', second: '2-digit' 
-        }),
-        tipo: tipoAccion, // Ej: 'REGISTRO', 'LOGIN', 'RECUPERO', 'VIAJE', 'ESTADO_VIAJE'
-        descripcion: descripcion,
-        usuario: usuarioInvolucrado
-    };
-
-    bitacora.unshift(nuevoRegistro); // Lo ponemos al principio para ver lo más nuevo primero
-    localStorage.setItem('fletarg_auditoria', JSON.stringify(bitacora));
-}
-
-// ==========================================
-// FLUJO DE RECUPERACIÓN DE CONTRASEÑA (Página dedicada)
-// ==========================================
-
-let emailEnProcesoRecupero = null;
-let codigoGeneradoSimulado = null;
-
-function enviarCodigoRecuperoPagina(e) {
+async function enviarCodigoRecuperoPagina(e) {
     e.preventDefault();
-    const emailInput = document.getElementById('email-recupero');
-    const email = emailInput ? emailInput.value.trim() : '';
-
+    const email = document.getElementById('email-recupero')?.value.trim();
     if (!email) {
-        alert('⚠️ Por favor, ingresá tu correo electrónico.');
+        mostrarModalMensaje('Falta correo', 'Ingresá tu correo electrónico.', 'advertencia');
         return;
     }
-
-    // Verificar si el usuario existe en el localStorage
-    const datosUsuario = localStorage.getItem(email);
-    if (!datosUsuario) {
-        alert('⚠️ El correo ingresado no se encuentra registrado en FletArg.');
-        return;
-    }
-
-    // Generar código aleatorio de 6 dígitos
-    codigoGeneradoSimulado = Math.floor(100000 + Math.random() * 900000).toString();
-    emailEnProcesoRecupero = email;
-
-    // Simulación de envío de correo
-    alert(`📧 [SIMULACIÓN DE EMAIL] Correo enviado a ${email}.\n\nTu código de recuperación es: ${codigoGeneradoSimulado}`);
-
-    // Alternar vistas de los pasos
-    const pasoCorreo = document.getElementById('paso-correo');
-    const pasoNuevaPass = document.getElementById('paso-nueva-pass');
-
-    if (pasoCorreo) pasoCorreo.style.display = 'none';
-    if (pasoNuevaPass) pasoNuevaPass.style.display = 'block';
-
-    // AUDITORÍA: Registrar evento
-    if (typeof registrarAccionEnBitacora === 'function') {
-        registrarAccionEnBitacora('RECUPERO_SOLICITUD', `Solicitud de código de recuperación`, email);
-    }
-}
-
-function cambiarContrasenaPagina(e) {
-    e.preventDefault();
-    const codigoInput = document.getElementById('codigo-ingresado');
-    const nuevaPassInput = document.getElementById('nueva-contrasena');
-
-    const codigoIngresado = codigoInput ? codigoInput.value.trim() : '';
-    const nuevaPass = nuevaPassInput ? nuevaPassInput.value.trim() : '';
-
-    if (codigoIngresado !== codigoGeneradoSimulado) {
-        alert('⚠️ El código ingresado es incorrecto.');
-        return;
-    }
-
-    if (nuevaPass.length < 4) {
-        alert('⚠️ La contraseña debe tener al menos 4 caracteres.');
-        return;
-    }
-
-    // Actualizar datos en el localStorage
-    const datosUsuario = JSON.parse(localStorage.getItem(emailEnProcesoRecupero));
-    if (datosUsuario) {
-        datosUsuario.password = nuevaPass;
-        localStorage.setItem(emailEnProcesoRecupero, JSON.stringify(datosUsuario));
-
-        // AUDITORÍA: Registrar éxito
-        if (typeof registrarAccionEnBitacora === 'function') {
-            registrarAccionEnBitacora('RECUPERO_EXITOSO', `Contraseña restablecida exitosamente`, emailEnProcesoRecupero);
-        }
-
-        alert('🎉 ¡Contraseña actualizada con éxito! Ya podés iniciar sesión.');
-        window.location.href = 'index.html';
-    } else {
-        alert('⚠️ Ocurrió un error al actualizar la cuenta.');
+    try {
+        await auth.sendPasswordResetEmail(email);
+        mostrarModalMensaje('Correo enviado', `📧 Enlace enviado a ${email}.`, 'exito', () => {
+            window.location.href = 'index.html';
+        });
+    } catch (error) {
+        mostrarModalMensaje('Error', 'No se pudo enviar el correo de recuperación.', 'error');
     }
 }

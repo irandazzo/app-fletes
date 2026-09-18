@@ -4,70 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FletArg - Recuperar Contraseña</title>
-
-<!-- Base de Datos -->
- <!-- SDKs de Firebase por CDN (Compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-    <!-- Estilos -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="body-app">
 
     <header>
-        FletArg
+        FletArg - Recuperar Acceso
     </header>
 
     <main>
-        <h2>Recuperar Contraseña</h2>
-        
-        <!-- PASO 1: Ingresar el correo -->
-        <div id="paso-correo">
-            <p style="text-align: center; color: #555; margin-bottom: 25px; line-height: 1.5;">
-                Ingresá el correo electrónico con el que te registraste y te enviaremos un código de recuperación.
-            </p>
+        <h2 style="margin-bottom: 10px;">Restablecer contraseña</h2>
+        <p style="color: #666; font-size: 14px; text-align: center; margin-bottom: 25px; line-height: 1.4;">
+            Ingresá tu correo electrónico registrado y te enviaremos un enlace oficial de Firebase para que puedas crear una nueva contraseña.
+        </p>
+
+        <!-- Formulario de Recupero conectado a la función global en main.js -->
+        <form id="form-recupero" onsubmit="enviarCodigoRecuperoPagina(event)">
+            <div class="form-group">
+                <label for="email-recupero">Correo electrónico</label>
+                <input type="email" id="email-recupero" autocomplete="email" placeholder="tucorreo@email.com" required>
+            </div>
+
+            <button type="submit" class="btn-principal" style="background-color: #0066cc; margin-bottom: 15px;">Enviar enlace de recuperación</button>
             
-            <form id="form-recupero-correo" onsubmit="enviarCodigoRecuperoPagina(event)">
-                <div class="form-group">
-                    <label for="email-recupero">Email:</label>
-                    <input type="email" id="email-recupero" name="email-recupero" placeholder="ejemplo@correo.com" required>
-                </div>
-
-                <button type="submit" class="btn-principal">Enviar código</button>
-            </form>
-        </div>
-
-        <!-- PASO 2: Ingresar código y nueva contraseña (Nace oculto) -->
-        <div id="paso-nueva-pass" style="display: none; margin-top: 15px;">
-            <p style="text-align: center; color: #28a745; font-weight: 600; margin-bottom: 20px;">
-                ✔️ Código enviado. Revisá tu bandeja (simulado).
-            </p>
-
-            <form id="form-nueva-pass" onsubmit="cambiarContrasenaPagina(event)">
-                <div class="form-group">
-                    <label for="codigo-ingresado">Código de 6 dígitos:</label>
-                    <input type="text" id="codigo-ingresado" placeholder="Ej: 485912" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="nueva-contrasena">Nueva contraseña:</label>
-                    <input type="password" id="nueva-contrasena" placeholder="Mínimo 4 caracteres" required>
-                </div>
-
-                <button type="submit" class="btn-principal">Actualizar contraseña</button>
-            </form>
-        </div>
-
-        <div class="registro-section" style="margin-top: 20px;">
-            <a href="index.html" style="text-decoration: none;">
-                <button type="button" class="btn-secundario">Volver al Login</button>
-            </a>
-        </div>
+            <div style="text-align: center;">
+                <a href="index.html" style="color: #666; font-size: 14px; text-decoration: none; font-weight: 600;">← Volver al Login</a>
+            </div>
+        </form>
     </main>
 
-    <!-- Vinculamos nuestro script -->
+    <!-- SDKs de Firebase por CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <script src="main.js"></script>
 </body>
 </html>

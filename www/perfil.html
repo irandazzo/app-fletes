@@ -13,28 +13,54 @@
     </header>
 
     <main class="main-fletero">
-        <!-- Tarjeta de información del usuario -->
-        <div class="tarjeta-viaje" style="text-align: center; padding: 30px 20px;">
-            <div style="font-size: 50px; margin-bottom: 15px;">👤</div>
-            <h3 id="perfil-nombre" style="margin-bottom: 5px; font-size: 20px; color: #333;">Cargando...</h3>
-            <p id="perfil-email" style="color: #666; margin-bottom: 15px; font-size: 14px;"></p>
-            <span id="perfil-rol" class="distancia" style="padding: 6px 15px; font-size: 14px; display: inline-block; margin-bottom: 25px; background-color: #e6f0fa; color: #0066cc;">Rol</span>
-            
-            <!-- Botón de Modo Oscuro -->
-            <button class="btn-principal" onclick="toggleDarkMode()" style="background-color: #333; color: #fff; width: 100%; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">
-                🌙 Activar / Desactivar Modo Oscuro
-            </button>
-            <!-- Botón Cerrar Sesión -->
-            <button class="btn-rechazar" onclick="cerrarSesion()" style="background-color: #f8d7da; color: #dc3545; width: 100%; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                Cerrar Sesión
-            </button>
+        <div style="text-align: center; margin-bottom: 15px;">
+            <div style="font-size: 40px; margin-bottom: 2px;">👤</div>
+            <h3 id="perfil-nombre" style="font-size: 18px; color: #2b3a4a;">Cargando...</h3>
+            <p id="perfil-email" style="color: #666; font-size: 12px;"></p>
+            <span id="perfil-rol" style="display: inline-block; background: #e2f0d9; color: #385723; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; margin-top: 3px;">-</span>
         </div>
+
+        <form id="form-editar-perfil">
+            <h4 style="font-size: 13px; margin-bottom: 8px; color: #444;">✏️ Modificar mis datos</h4>
+            
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label for="editar-nombre">Nombre:</label>
+                <input type="text" id="editar-nombre" autocomplete="given-name" required style="padding: 10px; font-size: 14px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label for="editar-apellido">Apellido:</label>
+                <input type="text" id="editar-apellido" autocomplete="family-name" required style="padding: 10px; font-size: 14px;">
+            </div>
+
+            <div id="seccion-tarifas-perfil" style="display: none; border-top: 1px dashed #ddd; margin-top: 10px; padding-top: 10px;">
+                <h4 style="font-size: 13px; margin-bottom: 8px; color: #444;">💵 Mis Tarifas Generales</h4>
+                
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label for="editar-precio-piso">Valor por piso ($):</label>
+                    <input type="number" id="editar-precio-piso" min="0" style="padding: 10px; font-size: 14px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label for="editar-precio-peon">Valor por cada peón ($):</label>
+                    <input type="number" id="editar-precio-peon" min="0" style="padding: 10px; font-size: 14px;">
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                <button type="submit" class="btn-principal" style="background-color: #4CAF50; padding: 12px; font-size: 14px;">Guardar Cambios</button>
+                <button type="button" class="btn-principal" style="background-color: #2b3a4a; padding: 12px; font-size: 14px;" onclick="cerrarSesion()">Cerrar Sesión</button>
+                <button type="button" class="btn-principal" style="background-color: #dc3545; padding: 10px; font-size: 12px;" onclick="borrarCuenta()">⚠️ Borrar mi cuenta definitivamente</button>
+            </div>
+        </form>
     </main>
 
-    <!-- Barra de Navegación Inferior Dinámica según el rol -->
-    <nav class="bottom-nav" id="nav-perfil">
-        <!-- Se completa mediante JavaScript -->
-    </nav>
+    <nav class="bottom-nav" id="nav-perfil"></nav>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <script src="main.js"></script>
 </body>

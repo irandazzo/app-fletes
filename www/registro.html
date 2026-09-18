@@ -3,110 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FletArg - Crear Cuenta</title>
-
-    <!-- Estilos -->
+    <title>FletArg - Registro</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="body-app">
 
     <header>
         FletArg - Registro
     </header>
 
-    <main>
+    <main class="main-fletero">
         <h2 id="titulo-registro">Elegí tu tipo de cuenta</h2>
-        
-        <!-- PASO 1: Selección inicial de perfil con dos botones -->
+
+        <!-- Selector Inicial de Rol -->
         <div id="seleccion-perfil" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
-            <button type="button" class="btn-principal" onclick="mostrarFormulario('cliente')" style="background-color: #2b3a4a;">
-                Quiero pedir fletes (Cliente)
-            </button>
-            <button type="button" class="btn-principal" onclick="mostrarFormulario('proveedor')">
-                Tengo vehículo y quiero trabajar (Proveedor)
-            </button>
+            <button type="button" class="btn-principal" style="background-color: #0066cc;" onclick="mostrarFormulario('cliente')">👤 Soy Cliente (Necesito un flete)</button>
+            <button type="button" class="btn-principal" style="background-color: #2b3a4a;" onclick="mostrarFormulario('proveedor')">🚚 Soy Proveedor (Tengo vehículo)</button>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="index.html" style="color: #666; font-size: 14px; text-decoration: none;">← Volver al Login</a>
+            </div>
         </div>
 
-        <!-- PASO 2: Formulario de registro (Oculto hasta que eligen el botón) -->
+        <!-- Formulario Único de Registro -->
         <form id="form-registro" style="display: none;">
-            <!-- Campo oculto para guardar qué rol eligió -->
-            <input type="hidden" id="rol-elegido" name="rol-elegido">
+            <input type="hidden" id="rol-elegido" value="">
 
             <div class="form-group">
-                <label for="nombre">Nombre:</label>
-                <input type="text" id="nombre" name="nombre" placeholder="Ej: Ignacio" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="apellido">Apellido:</label>
-                <input type="text" id="apellido" name="apellido" placeholder="Ej: Randazzo" required>
+                <label for="nombre">Nombre</label>
+                <input type="text" id="nombre" autocomplete="given-name" required>
             </div>
 
             <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" placeholder="ejemplo@correo.com" required>
+                <label for="apellido">Apellido</label>
+                <input type="text" id="apellido" autocomplete="family-name" required>
             </div>
 
             <div class="form-group">
-                <label for="contrasena-reg">Contraseña:</label>
-                <input type="password" id="contrasena-reg" name="contrasena-reg" placeholder="********" required>
+                <label for="email">Correo electrónico</label>
+                <input type="email" id="email" autocomplete="email" required>
             </div>
 
-            <!-- Campos exclusivos de Proveedor (Se muestran solo si eligió proveedor) -->
-            
-<!-- Campos exclusivos de Proveedor -->
-    <div id="campos-proveedor" style="display: none;">
-        <div class="form-group">
-            <label for="precio-km">Valor por kilómetro ($):</label>
-            <input type="number" id="precio-km" name="precio-km" placeholder="Ej: 800" min="1">
-        </div>
+            <div class="form-group">
+                <label for="contrasena-reg">Contraseña</label>
+                <input type="password" id="contrasena-reg" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required>
+            </div>
 
-        <div class="form-group">
-            <label for="precio-piso">Valor por piso ($):</label>
-            <input type="number" id="precio-piso" name="precio-piso" placeholder="Ej: 3000" min="0">
-        </div>
+            <!-- Campos Extra si es Proveedor -->
+            <div id="campos-proveedor" style="display: none; border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px;">
+                <h4 style="margin-bottom: 12px; font-size: 15px; color: #333;">Tarifas Base Iniciales</h4>
+                
+                <div class="form-group">
+                    <label for="precio-piso">Valor por piso por escalera ($)</label>
+                    <input type="number" id="precio-piso" min="0" value="3000">
+                </div>
 
-        <div class="form-group">
-            <label for="ofrece-peon">¿Ofrecés servicio de peón/ayudante?</label>
-            <select id="ofrece-peon" name="ofrece-peon" class="select-estilo" onchange="togglePrecioPeon(this)">
-                <option value="no">No ofrezco peón</option>
-                <option value="si">Sí, ofrezco peón</option>
-            </select>
-        </div>
+                <div class="form-group">
+                    <label for="ofrece-peon">¿Ofrecés servicio de peón/ayudante?</label>
+                    <select id="ofrece-peon" class="select-estilo" onchange="togglePrecioPeon(this)">
+                        <option value="si">Sí</option>
+                        <option value="no" selected>No</option>
+                    </select>
+                </div>
 
-        <!-- Contenedor del precio del peón (Nace oculto) -->
-        <div class="form-group" id="contenedor-precio-peon" style="display: none;">
-            <label for="precio-peon">Valor por cada peón ($):</label>
-            <input type="number" id="precio-peon" name="precio-peon" placeholder="Ej: 8000" min="0">
-        </div>
+                <div class="form-group" id="contenedor-precio-peon" style="display: none;">
+                    <label for="precio-peon">Valor por cada peón ($)</label>
+                    <input type="number" id="precio-peon" min="0" value="8000">
+                </div>
 
-        <div class="form-group">
-            <label for="acepta-negociar">¿Aceptas negociar el precio con el cliente?</label>
-            <select id="acepta-negociar" name="acepta-negociar" class="select-estilo">
-                <option value="si">Sí, acepto contraofertas</option>
-                <option value="no">No, tarifa fija</option>
-            </select>
-        </div>
-    </div>
+                <div class="form-group">
+                    <label for="acepta-negociar">¿Aceptas negociar precio?</label>
+                    <select id="acepta-negociar" class="select-estilo">
+                        <option value="si" selected>Sí</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+            </div>
 
-            <button type="submit" class="btn-principal" style="margin-bottom: 10px;">Completar Registro</button>
-            <button type="button" class="btn-secundario" onclick="volverSeleccion()">Cambiar tipo de cuenta</button>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn-secundario" style="flex: 1;" onclick="volverSeleccion()">Atrás</button>
+                <button type="submit" class="btn-principal" style="flex: 2; background-color: #4CAF50;">Registrarse</button>
+            </div>
         </form>
-
-        <div class="registro-section">
-            <p>¿Ya tenés una cuenta?</p>
-            <a href="index.html" style="text-decoration: none;">
-                <button type="button" class="btn-secundario">Volver al Login</button>
-            </a>
-        </div>
     </main>
-<!-- Base de Datos -->
-    <!-- SDKs de Firebase por CDN (Compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
-<!-- Logica Principal -->
-<script src="main.js"></script>
+
+    <!-- SDKs de Firebase por CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script src="main.js"></script>
 </body>
 </html>

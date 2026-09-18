@@ -3,11 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FletArg - Mis Viajes (Proveedor)</title>
-
-
-
-    <!-- Estilos -->
+    <title>FletArg - Panel Proveedor</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="body-app">
@@ -17,98 +13,111 @@
     </header>
 
     <main class="main-fletero">
-        <!-- Panel de Estadísticas y Ganancias del Proveedor -->
-        <div class="tarjeta-viaje" style="background: linear-gradient(135deg, #2b3a4a, #1a2530); color: white; margin-bottom: 20px;">
-            <h3 style="margin-bottom: 15px; font-size: 16px; color: #e6f0fa;">📊 Tu Rendimiento</h3>
-            <div style="display: flex; justify-content: space-around; text-align: center;">
-                <div>
-                    <h4 id="stat-ganancias" style="font-size: 20px; color: #28a745; margin-bottom: 4px;">$ 0</h4>
-                    <small style="color: #bbb; font-size: 11px;">Ganancias Totales</small>
-                </div>
-                <div>
-                    <h4 id="stat-viajes" style="font-size: 20px; color: #4da6ff; margin-bottom: 4px;">0</h4>
-                    <small style="color: #bbb; font-size: 11px;">Viajes Exitosos</small>
-                </div>
-                <div>
-                    <h4 id="stat-calificacion" style="font-size: 20px; color: #ffc107; margin-bottom: 4px;">⭐ -</h4>
-                    <small style="color: #bbb; font-size: 11px;">Promedio</small>
-                </div>
+        
+        <!-- Tarjeta de Estadísticas del Proveedor -->
+        <div class="tarjeta-viaje" style="display: flex; justify-content: space-around; text-align: center; padding: 15px; margin-bottom: 20px;">
+            <div>
+                <span style="font-size: 11px; color: #777; display: block; font-weight: 600;">GANANCIAS</span>
+                <h4 id="stat-ganancias" style="font-size: 18px; color: #28a745; margin-top: 2px;">$ 0</h4>
+            </div>
+            <div style="border-left: 1px solid #eee; padding-left: 15px;">
+                <span style="font-size: 11px; color: #777; display: block; font-weight: 600;">VIAJES</span>
+                <h4 id="stat-viajes" style="font-size: 18px; color: #0066cc; margin-top: 2px;">0</h4>
+            </div>
+            <div style="border-left: 1px solid #eee; padding-left: 15px;">
+                <span style="font-size: 11px; color: #777; display: block; font-weight: 600;">CALIFICACIÓN</span>
+                <h4 id="stat-calificacion" style="font-size: 16px; color: #f59e0b; margin-top: 2px;">⭐ -</h4>
             </div>
         </div>
-        <!-- Pestañas (Tabs) de navegación interna con IDs para los contadores -->
+
+        <!-- Sección de Gestión de Vehículos Propios -->
+        <div class="tarjeta-viaje" style="margin-bottom: 20px;">
+            <h3 style="font-size: 16px; margin-bottom: 12px; color: #2b3a4a;">🚐 Mis Vehículos Registrados</h3>
+            
+            <div id="lista-vehiculos-proveedor" style="margin-bottom: 15px;">
+                <!-- Se llena por JavaScript -->
+            </div>
+
+            <!-- Formulario para agregar nuevo vehículo -->
+            <div style="border-top: 1px dashed #eee; padding-top: 15px;">
+                <h4 style="font-size: 14px; margin-bottom: 10px; color: #444;">➕ Agregar nuevo vehículo</h4>
+                
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label for="nuevo-tipo-vehiculo">Tipo:</label>
+                    <select id="nuevo-tipo-vehiculo" class="select-estilo">
+                        <option value="Moto">Moto</option>
+                        <option value="Utilitario">Utilitario</option>
+                        <option value="Pickup">Pickup</option>
+                        <option value="Camión">Camión</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label for="nueva-patente">Patente:</label>
+                    <input type="text" id="nueva-patente" placeholder="Ej: AB123CD" style="text-transform: uppercase;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label for="nuevo-precio-km">Valor por kilómetro ($):</label>
+                    <input type="number" id="nuevo-precio-km" min="0" placeholder="Ej: 1500">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="nueva-descripcion">Descripción / Comodidades:</label>
+                    <input type="text" id="nueva-descripcion" placeholder="Ej: Con bocha para trailer, carpa alta...">
+                </div>
+
+                <button type="button" class="btn-principal" style="background-color: #0066cc; padding: 12px; font-size: 14px;" onclick="agregarVehiculoProveedor()">Guardar Vehículo</button>
+            </div>
+        </div>
+
+        <!-- Solapas de Viajes Disponibles y en Curso -->
         <div class="pestanas-container">
-            <button id="btn-tab-pendientes" class="pestana-btn activa" onclick="cambiarPestana('pendientes')">Pendientes (0)</button>
-            <button id="btn-tab-aceptados" class="pestana-btn" onclick="cambiarPestana('aceptados')">Aceptados (0)</button>
-            <button id="btn-tab-completados" class="pestana-btn" onclick="cambiarPestana('completados')">Completados (0)</button>
+            <button class="pestana-btn activa" id="btn-tab-pendientes" onclick="cambiarPestana('pendientes')">Pendientes (0)</button>
+            <button class="pestana-btn" id="btn-tab-aceptados" onclick="cambiarPestana('aceptados')">Aceptados (0)</button>
+            <button class="pestana-btn" id="btn-tab-completados" onclick="cambiarPestana('completados')">Completados (0)</button>
         </div>
 
-        <!-- SECCIÓN 1: PENDIENTES -->
-        <div id="seccion-pendientes" class="seccion-tab">
-            <h3 class="titulo-seccion">Viajes ofertados (Esperando tu decisión)</h3>
-            <!-- Barra de Filtros por Vehículo -->
-<div class="filtros-proveedor" style="margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap;">
-    <button type="button" class="btn-filtro activo" onclick="filtrarViajes('todos', this)">Todos</button>
-    <button type="button" class="btn-filtro" onclick="filtrarViajes('Moto', this)">Moto</button>
-    <button type="button" class="btn-filtro" onclick="filtrarViajes('Auto', this)">Auto</button>
-    <button type="button" class="btn-filtro" onclick="filtrarViajes('Pickup', this)">Pickup</button>
-    <button type="button" class="btn-filtro" onclick="filtrarViajes('Utilitario', this)">Utilitario</button>
-    <button type="button" class="btn-filtro" onclick="filtrarViajes('Camión', this)">Camión</button>
-</div>
-            <!-- Contenedor dinámico donde JS dibujará los viajes -->
+        <!-- Filtros rápidos por tipo de vehículo -->
+        <div id="seccion-pendientes" style="display: block;">
+            <div style="display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px;">
+                <button type="button" class="btn-filtro activo" onclick="filtrarViajes('todos', this)">Todos</button>
+                <button type="button" class="btn-filtro" onclick="filtrarViajes('Moto', this)">Moto</button>
+                <button type="button" class="btn-filtro" onclick="filtrarViajes('Utilitario', this)">Utilitario</button>
+                <button type="button" class="btn-filtro" onclick="filtrarViajes('Pickup', this)">Pickup</button>
+                <button type="button" class="btn-filtro" onclick="filtrarViajes('Camión', this)">Camión</button>
+            </div>
+            
             <div id="lista-viajes-pendientes">
-                <!-- Acá se cargarán los viajes creados por los clientes -->
+                <!-- Se llena por JavaScript -->
             </div>
-            
         </div>
 
-        <!-- SECCIÓN 2: ACEPTADOS -->
-        <div id="seccion-aceptados" class="seccion-tab" style="display: none;">
-            <h3 class="titulo-seccion">Viajes en curso / En camino</h3>
-            
-            <!-- Contenedor dinámico donde JS dibujará los viajes aceptados -->
+        <div id="seccion-aceptados" style="display: none;">
             <div id="lista-viajes-aceptados">
-                <!-- Acá se cargarán los viajes aceptados -->
+                <!-- Se llena por JavaScript -->
             </div>
         </div>
 
-        <!-- SECCIÓN 3: COMPLETADOS -->
-        <div id="seccion-completados" class="seccion-tab" style="display: none;">
-            <h3 class="titulo-seccion">Historial de viajes realizados</h3>
-            
-            <!-- Contenedor dinámico donde JS dibujará los viajes completados -->
+        <div id="seccion-completados" style="display: none;">
             <div id="lista-viajes-completados">
-                <!-- Acá se cargarán los viajes finalizados -->
+                <!-- Se llena por JavaScript -->
             </div>
-        </div>
-            
         </div>
 
     </main>
 
-    <!-- Barra Inferior -->
+    <!-- Navegación Inferior -->
     <nav class="bottom-nav">
-        <a href="proveedor.html" style="text-decoration: none;" class="nav-item">
-            <span class="icono">📋</span>
-            <span>Ofertas</span>
-        </a>
-        <div class="nav-item activo">
-            <span class="icono">📊</span>
-            <span>Mis Viajes</span>
-        </div>
-        <div class="nav-item">
-            <a href="perfil.html" style="text-decoration: none;" class="nav-item">
-            <span class="icono">👤</span>
-            <span>Perfil</span>
-</a>
-        </div>
+        <a href="proveedor-perfil.html" class="nav-item activo"><span class="icono">📊</span><span>Mis Viajes</span></a>
+        <a href="perfil.html" class="nav-item"><span class="icono">👤</span><span>Perfil</span></a>
     </nav>
-<!-- Base de Datos -->
- <!-- SDKs de Firebase por CDN (Compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-<!-- Logica Principal -->
+    <!-- SDKs de Firebase por CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <script src="main.js"></script>
 </body>
 </html>
